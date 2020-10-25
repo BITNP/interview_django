@@ -1,0 +1,13 @@
+<ul>
+    {% for interviewee in interviewee_list %}
+    <li>
+        {{ interviewee.id }} - {{ interviewee.name }} - {{ interviewee.get_interview_status_display }}
+    </li>
+    {% endfor %}
+</ul>
+
+
+<form action="{% url 'admission:admission_start_admin' %}" method="post">
+    {% csrf_token %}
+    <input type="submit" value="Submit">
+</form>
