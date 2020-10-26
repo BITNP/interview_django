@@ -20,7 +20,7 @@ def index(request):
 
 def public_index(request):
     interviewee_list = models.Interviewee.objects.filter(
-        interview_status__lt=5).order_by('assigned_datetime').all()
+        interview_status__lt=5).order_by('-interview_status', 'assigned_datetime').all()
     context = {
         'interviewee_list': interviewee_list
     }
@@ -33,7 +33,7 @@ def interviewee_index(request):
         return Forbidden()
     room_list = models.Room.objects.all()
     interviewee_list = models.Interviewee.objects.filter(
-        interview_status__lt=5).order_by('assigned_datetime').all()
+        interview_status__lt=5).order_by('-interview_status', 'assigned_datetime').all()
     context = {
         'interviewee_list': interviewee_list,
         'room_list': room_list
@@ -62,7 +62,7 @@ def room_index(request, room_id):
         return Forbidden()
     room = get_object_or_404(models.Room, pk=room_id)
     interviewee_list = models.Interviewee.objects.filter(Q(assigned_room=room) | Q(
-        interview_status=2)).order_by('-assigned_datetime').all()
+        interview_status=2)).order_by('interview_status', 'assigned_datetime').all()
     context = {
         'room_id': room_id,
         'interviewee_list': interviewee_list
@@ -77,7 +77,7 @@ def room_interviewee_detail(request, room_id, interviewee_id):
     if request.user.interviewer.room.id != room_id:
         return Forbidden()
     interviewee = get_object_or_404(models.Interviewee, pk=interviewee_id)
-    if interviewee.interview_status < 4:
+    if interviewee.interview_status < 3:
         return Forbidden()
     if interviewee.assigned_room.id != room_id:
         return Forbidden()
@@ -106,7 +106,7 @@ def interviewee_assign(request, room_id, interviewee_id):
         interviewee.save()
     else:
         return Forbidden()
-    return HttpResponseRedirect(reverse('interview:room_index', args=(room_id,)))
+    return HttpResponseRedirect(reverse('interview:room_interviewee_detail', args=(room_id, interviewee_id)))
 
 
 @login_required()

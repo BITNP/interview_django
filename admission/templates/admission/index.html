@@ -46,17 +46,17 @@
     <main role="main" class="container">
         <div class="jumbotron">
             {% if user.is_authenticated %}
-                Hello, {{ user }}.
-                <br>
-                Identity: {{ user.first_name }} - {{ user.interviewer.department }}
-                <br>
-                <a href="{% url 'admission:department_index' user.interviewer.department.id %}">部门待录取队列</a>
-                <br>
-                <a href="{% url 'admission:department_admitted' user.interviewer.department.id %}">部门已录取人员</a>
-                <br>
-                <a href="{% url 'admission:final_queue_index' %}">捡漏队列</a>
+                <p>Hello, {{ user }}.</p>
+                {% if user.interviewer %}
+                    <p>Identity: {{ user.first_name }} - {{ user.interviewer.department }}</p>
+                    <a href="{% url 'admission:department_index' user.interviewer.department.id %}">部门待录取队列</a>
+                    <a href="{% url 'admission:department_admitted' user.interviewer.department.id %}">部门已录取人员</a>
+                    <a href="{% url 'admission:final_queue_index' %}">捡漏队列</a>
+                {% else %}
+                <p>No interview_identity for this user. Please contact admin.</p>
+                {% endif %}
             {% else %}
-                请登录
+                <p>Please log in.</p>
             {% endif %}
         </div>
     </main>

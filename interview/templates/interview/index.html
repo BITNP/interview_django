@@ -46,20 +46,24 @@
     <main role="main" class="container">
         <div class="jumbotron">
             {% if user.is_authenticated %}
-                Hello, {{ user }}.
-                <br>
-                Identity: {{ user.first_name }} - {{ user.interviewer.department }} - {{ user.interviewer.get_interview_identity_display }}
-                {% if user.interviewer.interview_identity != 1 %}
-                    - {{ user.interviewer.room }}
-                {% endif %}
-                <br>
-                {% if user.interviewer.interview_identity == 1 %}
-                    <a href="{% url 'interview:interviewee_index' %}">面试系统</a>
+                <p>Hello, {{ user }}.</p>
+                {% if user.interviewer %}
+                    <p>
+                    Identity: {{ user.first_name }} - {{ user.interviewer.department }} - {{ user.interviewer.get_interview_identity_display }}
+                    {% if user.interviewer.interview_identity != 1 %}
+                        - {{ user.interviewer.room }}
+                    {% endif %}
+                    </p>
+                    {% if user.interviewer.interview_identity == 1 %}
+                        <a href="{% url 'interview:interviewee_index' %}">进入面试 - {{ user.interviewer.get_interview_identity_display }}</a>
+                    {% else %}
+                        <a href="{% url 'interview:room_index' user.interviewer.room.id %}">进入面试 - {{ user.interviewer.get_interview_identity_display }}</a>
+                    {% endif %}
                 {% else %}
-                    <a href="{% url 'interview:room_index' user.interviewer.room.id %}">面试系统</a>
+                <p>No interview_identity for this user. Please contact admin.</p>
                 {% endif %}
             {% else %}
-                请登录
+                <p>Please log in.</p> 
             {% endif %}
         </div>
     </main>
