@@ -49,6 +49,7 @@
                             <th>接受调剂</th>
                             <th>一志愿</th>
                             <th>二志愿</th>
+                            <th>操作</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -60,33 +61,14 @@
                             <td>{{ interviewee.accept_adjust }}</td>
                             <td>{{ interviewee.first_preference }}</td>
                             <td>{{ interviewee.second_preference }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <ul class="list-group mb-5">
-                    <li class="list-group-item">{{ interviewee.introduction_text }}</li>
-                </ul>
-
-                <table class="table table-hover table-responsive m-auto">
-                    <thead>
-                        <tr>
-                            {% for department in department_list %}
-                            <th>{{department}}录取</th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            {% for department in department_list %}
                             <td>
                                 <a href="{% url 'admission:final_queue_admit' department.id interviewee.id %}">
-                                    <button type="button" class="btn btn-success btn-block">录取</button>
+                                    <button type="button" class="btn btn-success btn-block">{{department}} 录取</button>
                                 </a>
                             </td>
-                            {% endfor %}
                         </tr>
                     </tbody>
-                </table>
+
             </div>
 
 

@@ -1,0 +1,78 @@
+[
+    {
+        "model": "interview.Department",
+        "pk": 1,
+        "fields": {
+            "name": "技术部"
+        }
+    },
+    {
+        "model": "interview.Department",
+        "pk": 2,
+        "fields": {
+            "name": "数字媒体部"
+        }
+    },
+    {
+        "model": "interview.Department",
+        "pk": 3,
+        "fields": {
+            "name": "电脑诊所"
+        }
+    },
+    {
+        "model": "interview.Department",
+        "pk": 4,
+        "fields": {
+            "name": "组织部"
+        }
+    },
+    {
+        "model": "interview.Room",
+        "pk": 1,
+        "fields": {
+            "name": "Room1"
+        }
+    },
+    {
+        "model": "interview.Room",
+        "pk": 2,
+        "fields": {
+            "name": "Room2"
+        }
+    },
+    {
+        "model": "interview.Interviewee",
+        "pk": 1,
+        "fields": {
+            "name": "张小樱",
+            "sex": "女生",
+            "phone_number": "10101010101",
+            "student_id": "1010101010",
+            "majar_text": "计科",
+            "introduction_text": "萌萌的女孩子~",
+            "interview_status": 1,
+            "accept_adjust": true,
+            "first_preference": 1,
+            "second_preference": 2,
+            "assigned_datetime": "2020-10-25T15:00:00"
+        }
+    },
+    {
+        "model": "interview.Interviewee",
+        "pk": 2,
+        "fields": {
+            "name": "张小樱2号",
+            "sex": "女生",
+            "phone_number": "10101010100",
+            "student_id": "1010101011",
+            "majar_text": "计科",
+            "introduction_text": "萌萌的女孩子~",
+            "interview_status": 1,
+            "accept_adjust": true,
+            "first_preference": 2,
+            "second_preference": 1,
+            "assigned_datetime": "2020-10-25T15:05:00"
+        }
+    }
+]

@@ -67,9 +67,11 @@ def interviewee_detail(request, department_id, interviewee_id):
     interviewee = get_object_or_404(models.Interviewee, pk=interviewee_id)
     if interviewee.interview_status < 6 or interviewee.interview_status > 8:
         return Forbidden()
+    comment_list = models.Comment.objects.filter(interviewee=interviewee)
     context = {
         'department_id': department_id,
-        'interviewee': interviewee
+        'interviewee': interviewee,
+        'comment_list': comment_list
     }
     return render(request, 'admission/interviewee_detail.html', context=context)
 
@@ -132,11 +134,11 @@ def final_queue_index(request):
 
 @login_required()
 def final_queue_detail(request, interviewee_id):
-    department_list = models.Department.objects.all()
+    department = request.user.interviewer.department
     interviewee = get_object_or_404(models.Interviewee, pk=interviewee_id)
     context = {
         'interviewee': interviewee,
-        'department_list': department_list
+        'department': department
     }
     return render(request, 'admission/final_queue_detail.html', context=context)
 
@@ -145,6 +147,8 @@ def final_queue_detail(request, interviewee_id):
 def final_queue_admit(request, department_id, interviewee_id):
     department = get_object_or_404(models.Department, pk=department_id)
     interviewee = get_object_or_404(models.Interviewee, pk=interviewee_id)
+    if request.user.interviewer.department.id != department_id:
+        return Forbidden()
     if interviewee.interview_status != 8:
         return Forbidden()
     interviewee.admitted_department = department

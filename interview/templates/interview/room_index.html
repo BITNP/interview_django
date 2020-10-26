@@ -44,6 +44,7 @@
                     <tr>
                         <th>时间</th>
                         <th>姓名</th>
+                        <th>性别</th>
                         <th>学号</th>
                         <th>状态</th>
                         <th>接受调剂</th>
@@ -57,6 +58,7 @@
                     <tr class="warning">
                         <td>{{ interviewee.assigned_datetime }}</td>
                         <td>{{ interviewee.name }}</td>
+                        <td>{{ interviewee.sex }}</td>
                         <td>{{ interviewee.student_id }}</td>
                         <td>{{ interviewee.get_interview_status_display }}</td>
                         <td>{{ interviewee.accept_adjust }}</td>
