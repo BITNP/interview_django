@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from interview import models
 from django.utils.html import escape
 from django.db.models import Q
+import csv
 # Create your views here.
 
 
@@ -46,8 +47,11 @@ def department_index(request, department_id):
 @login_required()
 def department_admitted(request, department_id):
     department_list = models.Department.objects.all()
+    department = department_list.filter(pk=department_id).first()
+    if not department:
+        return Forbidden()
     interviewee_list = models.Interviewee.objects.filter(
-        admitted_department_id=department_id, interview_status=9).all()
+        admitted_department=department, interview_status=9).all()
     context = {
         'department_id': department_id,
         'interviewee_list': interviewee_list,
@@ -147,3 +151,22 @@ def final_queue_admit(request, department_id, interviewee_id):
     interviewee.interview_status = 9
     interviewee.save()
     return HttpResponseRedirect(reverse('admission:final_queue_index'))
+
+
+@login_required()
+def department_admitted_csv(request, department_id):
+    department = get_object_or_404(models.Department, pk=department_id)
+    interviewee_list = models.Interviewee.objects.filter(
+        admitted_department=department, interview_status=9).all()
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename={department.id}.csv'
+
+    writer = csv.writer(response)
+    writer.writerow(('name', 'sex', 'student_id',
+                     'phone_number', 'admitted_department'))
+    for it in interviewee_list:
+        writer.writerow((
+            it.name, it.sex, it.student_id, it.phone_number, it.admitted_department
+        ))
+
+    return response

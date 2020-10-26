@@ -37,10 +37,15 @@
     <main role="main" class="container">
         <div class="jumbotron">
             <div class="mb-3">
-                {% for department in department_list %}
-                <a href="{% url 'admission:department_admitted' department.id %}">{{ department }}</a>
-                {% endfor %}
-                <a href="{% url 'admission:index'%}">返回</a>
+                <p>
+                    {% for department in department_list %}
+                    <a href="{% url 'admission:department_admitted' department.id %}">{{ department }}</a>
+                    {% endfor %}
+                </p>
+                <p>
+                    <a href="{% url 'admission:department_admitted_csv' department_id %}">下载csv</a>
+                    <a href="{% url 'admission:index'%}">返回</a>
+                </p>
             </div>
             {% if interviewee_list %}
             <table class="table table-hover table-responsive m-auto">

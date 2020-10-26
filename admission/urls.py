@@ -22,6 +22,8 @@ urlpatterns = [
 
     path('departments/<int:department_id>/admitted',
          views.department_admitted, name='department_admitted'),
+    path('departments/<int:department_id>/admitted/download_csv',
+         views.department_admitted_csv, name='department_admitted_csv'),
 
      path('final_queue',
          views.final_queue_index, name='final_queue_index'),
