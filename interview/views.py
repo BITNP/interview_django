@@ -82,7 +82,7 @@ def room_index(request, room_id):
     提供拉人功能和面试详情入口
     """
     user_identity = request.user.interviewer.interview_identity
-    user_room_id = request.user.interviewer.room.id
+    user_room_id = request.user.interviewer.room_id
     if user_identity == Interviewer.INTERVIEW_ROOM and user_room_id == room_id:
         readonly = False
     else:
@@ -103,11 +103,10 @@ def room_index(request, room_id):
 @login_required()
 def room_interviewee_detail(request, room_id, interviewee_id):
     """
-    面试官的面试者详情页面，侯场教室不能访问
-    提供评论和面试开始/结束
+    面试官的面试者详情页面，提供评论和面试开始/结束
     """
     user_identity = request.user.interviewer.interview_identity
-    user_room_id = request.user.interviewer.room.id
+    user_room_id = request.user.interviewer.room_id
     if user_identity == Interviewer.INTERVIEW_ROOM and user_room_id == room_id:
         readonly = False
     else:
@@ -138,7 +137,7 @@ def interviewee_assign(request, room_id, interviewee_id):
     将面试者分配到教室
     """
     user_identity = request.user.interviewer.interview_identity
-    user_room_id = request.user.interviewer.room.id
+    user_room_id = request.user.interviewer.room_id
     if user_identity != Interviewer.INTERVIEW_ROOM:
         return Forbidden()
     if user_room_id != room_id:
@@ -169,7 +168,7 @@ def room_interviewee_start(request, room_id, interviewee_id):
     面试者到教室，开始面试
     """
     user_identity = request.user.interviewer.interview_identity
-    user_room_id = request.user.interviewer.room.id
+    user_room_id = request.user.interviewer.room_id
     if user_identity != Interviewer.INTERVIEW_ROOM:
         return Forbidden()
     if user_room_id != room_id:
@@ -195,7 +194,7 @@ def room_interviewee_end(request, room_id, interviewee_id):
     结束面试
     """
     user_identity = request.user.interviewer.interview_identity
-    user_room_id = request.user.interviewer.room.id
+    user_room_id = request.user.interviewer.room_id
     if user_identity != Interviewer.INTERVIEW_ROOM:
         return Forbidden()
     if user_room_id != room_id:
@@ -219,7 +218,7 @@ def room_interviewee_comment(request, room_id, interviewee_id):
     给面试者添加评论
     """
     user_identity = request.user.interviewer.interview_identity
-    user_room_id = request.user.interviewer.room.id
+    user_room_id = request.user.interviewer.room_id
     if user_identity != Interviewer.INTERVIEW_ROOM:
         return Forbidden()
     if user_room_id != room_id:
