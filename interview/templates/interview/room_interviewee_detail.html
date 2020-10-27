@@ -62,16 +62,18 @@
                             <td>{{ interviewee.first_preference }}</td>
                             <td>{{ interviewee.second_preference }}</td>
                             <td>
-                                {% if interviewee.interview_status == 3 %}
-                                <a href="{% url 'interview:room_interviewee_start' room_id interviewee.id %}">
-                                    <button type="button" class="btn btn-success btn-block">开始面试</button>
-                                </a>
-                                {% elif interviewee.interview_status == 4 %}
-                                <a href="{% url 'interview:room_interviewee_end' room_id interviewee.id %}">
-                                    <button type="button" class="btn btn-danger btn-block">结束面试</button>
-                                </a>
-                                {% else %}
-                                    <button type="button" class="btn btn-secondary btn-block disable">面试已结束</button>
+                                {% if not readonly %}
+                                    {% if interviewee.interview_status == 3 %}
+                                    <a href="{% url 'interview:room_interviewee_start' room_id interviewee.id %}">
+                                        <button type="button" class="btn btn-success btn-block">开始面试</button>
+                                    </a>
+                                    {% elif interviewee.interview_status == 4 %}
+                                    <a href="{% url 'interview:room_interviewee_end' room_id interviewee.id %}">
+                                        <button type="button" class="btn btn-danger btn-block">结束面试</button>
+                                    </a>
+                                    {% else %}
+                                        <button type="button" class="btn btn-secondary btn-block disable">面试已结束</button>
+                                    {% endif %}
                                 {% endif %}
                             </td>
                         </tr>
@@ -97,6 +99,7 @@
                     </ul>
                     {% endif %}
                 </div>
+                {% if not readonly %}
                 <form action="{% url 'interview:room_interviewee_comment' room_id interviewee.id %}" method="post">
                     {% csrf_token %}
                     <label for="id_content">评论:</label>
@@ -105,6 +108,7 @@
                     <br>
                     <input type="submit" value="Submit">
                 </form>
+                {% endif %}
             </div>
         </div>
     </main>

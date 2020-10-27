@@ -65,18 +65,28 @@
                         <td>{{ interviewee.first_preference }}</td>
                         <td>{{ interviewee.second_preference }}</td>
                         <td>
-                        {% if interviewee.interview_status == 2 %}
-                        <a href="{% url 'interview:interviewee_assign' room_id interviewee.id %}">
-                            <button type="button" class="btn btn-info btn-block">拉来面试</button>
-                        </a>
-                        {% elif interviewee.interview_status < 5 %}
-                        <a href="{% url 'interview:room_interviewee_detail' room_id interviewee.id %}">
-                            <button type="button" class="btn btn-warning btn-block">面试详情页面</button>
-                        </a>
+                        {% if not readonly %}
+                            {% if interviewee.interview_status == 2 %}
+                            <a href="{% url 'interview:interviewee_assign' room_id interviewee.id %}">
+                                <button type="button" class="btn btn-info btn-block">拉来面试</button>
+                            </a>
+                            {% elif interviewee.interview_status < 5 %}
+                            <a href="{% url 'interview:room_interviewee_detail' room_id interviewee.id %}">
+                                <button type="button" class="btn btn-warning btn-block">进入面试页面</button>
+                            </a>
+                            {% else %}
+                            <a href="{% url 'interview:room_interviewee_detail' room_id interviewee.id %}">
+                                <button type="button" class="btn btn-secondary btn-block">填写评论</button>
+                            </a>
+                            {% endif %}
                         {% else %}
-                        <a href="{% url 'interview:room_interviewee_detail' room_id interviewee.id %}">
-                            <button type="button" class="btn btn-secondary btn-block">填写评论</button>
-                        </a>
+                            {% if interviewee.interview_status == 2 %}
+                            <button type="button" class="btn btn-secondary btn-block">未分配教室</button>
+                            {% else %}
+                            <a href="{% url 'interview:room_interviewee_detail' room_id interviewee.id %}">
+                                <button type="button" class="btn btn-secondary btn-block">查看</button>
+                            </a>
+                            {% endif %}
                         {% endif %}
                         </td>
                     </tr>

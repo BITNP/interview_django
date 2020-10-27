@@ -49,16 +49,13 @@
                 <p>Hello, {{ user }}.</p>
                 {% if user.interviewer %}
                     <p>
-                    Identity: {{ user.first_name }} - {{ user.interviewer.department }} - {{ user.interviewer.get_interview_identity_display }}
-                    {% if user.interviewer.interview_identity != 1 %}
-                        - {{ user.interviewer.room }}
-                    {% endif %}
+                    Identity: {{ user.first_name }} - {{ user.interviewer.department }}
+                    - {{ user.interviewer.get_interview_identity_display }} - {{ user.interviewer.room }}
                     </p>
-                    {% if user.interviewer.interview_identity == 1 %}
-                        <a href="{% url 'interview:interviewee_index' %}">进入面试 - {{ user.interviewer.get_interview_identity_display }}</a>
-                    {% else %}
-                        <a href="{% url 'interview:room_index' user.interviewer.room.id %}">进入面试 - {{ user.interviewer.get_interview_identity_display }}</a>
-                    {% endif %}
+                    <p><a href="{% url 'interview:interviewee_index' %}">进入 侯场教室</a></p>
+                    {% for room in room_list %}
+                    <p><a href="{% url 'interview:room_index' room.id %}">进入 面试教室 - {{ room }}</a></p>
+                    {% endfor %}
                 {% else %}
                 <p>No interview_identity for this user. Please contact admin.</p>
                 {% endif %}

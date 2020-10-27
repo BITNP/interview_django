@@ -19,9 +19,13 @@ class Room(models.Model):
 
 
 class Interviewer(models.Model):
+    WAITING_ROOM = 1
+    INTERVIEW_ROOM = 2
+    OBSERVER = 3
     INTERVIEW_IDENTITY = (
-        (1, "侯场教室"),
-        (2, "面试教室")
+        (WAITING_ROOM, "侯场教室"),
+        (INTERVIEW_ROOM, "面试教室"),
+        (OBSERVER, "observer")
     )
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     interview_identity = models.IntegerField(choices=INTERVIEW_IDENTITY)
@@ -35,16 +39,25 @@ class Interviewer(models.Model):
 
 
 class Interviewee(models.Model):
+    NOT_CHECKED_IN = 1
+    CHECKED_IN = 2
+    INTERVIEW_READY = 3
+    INTERVIEW_STARTED = 4
+    INTERVIEW_END = 5
+    FIRST_PREFERENCE_QUEUE = 6
+    SECOND_PREFERENCE_QUEUE = 7
+    FINAL_QUEUE = 8
+    ADMITTED = 9
     INTERVIEWEE_STATUS = (
-        (1, "未签到"),
-        (2, "已签到候场"),
-        (3, "已经出发"),
-        (4, "面试开始"),
-        (5, "面试结束"),
-        (6, "第一志愿队列"),
-        (7, "第二志愿队列"),
-        (8, "最终队列"),
-        (9, "已录取")
+        (NOT_CHECKED_IN, "未签到"),
+        (CHECKED_IN, "已签到候场"),
+        (INTERVIEW_READY, "已分配教室准备出发"),
+        (INTERVIEW_STARTED, "面试开始"),
+        (INTERVIEW_END, "面试结束"),
+        (FIRST_PREFERENCE_QUEUE, "第一志愿队列"),
+        (SECOND_PREFERENCE_QUEUE, "第二志愿队列"),
+        (FINAL_QUEUE, "最终队列"),
+        (ADMITTED, "已录取")
     )
     name = models.CharField(max_length=30)
     sex = models.CharField(max_length=10)

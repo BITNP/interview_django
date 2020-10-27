@@ -5,22 +5,28 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from . import models
+from .models import *
 
 # Create your views here.
 
 
 def Forbidden():
-    return HttpResponseForbidden("403 Forbidden. What are you doing?")
+    return HttpResponseForbidden("<h1>Forbidden</h1><p>If you think this should not happen, please contact the project maintainer.</p>")
 
 
 def index(request):
-    return render(request, 'interview/index.html')
+    room_list = Room.objects.all()
+    context = {'room_list': room_list}
+    return render(request, 'interview/index.html', context=context)
 
 
 def public_index(request):
-    interviewee_list = models.Interviewee.objects.filter(
-        interview_status__lt=5).order_by('-interview_status', 'assigned_datetime').all()
+    """
+    候场教室显示的面试当前状态视图，公开
+    """
+    interviewee_list = Interviewee.objects \
+        .filter(interview_status__lt=Interviewee.INTERVIEW_END) \
+        .order_by('-interview_status', 'assigned_datetime').all()
     context = {
         'interviewee_list': interviewee_list
     }
@@ -29,133 +35,204 @@ def public_index(request):
 
 @login_required
 def interviewee_index(request):
-    if request.user.interviewer.interview_identity != 1:
-        return Forbidden()
-    room_list = models.Room.objects.all()
-    interviewee_list = models.Interviewee.objects.filter(
-        interview_status__lt=5).order_by('-interview_status', 'assigned_datetime').all()
+    """
+    侯场教室工作人员，提供更详细的信息和签到功能
+    列表显示面试未结束的人员，按照面试状态降序，时间升序
+    """
+    user_identity = request.user.interviewer.interview_identity
+    if user_identity == Interviewer.WAITING_ROOM:
+        readonly = False
+    else:
+        readonly = True
+
+    room_list = Room.objects.all()
+    interviewee_list = Interviewee.objects\
+        .filter(interview_status__lt=Interviewee.INTERVIEW_END)\
+        .order_by('-interview_status', 'assigned_datetime').all()
     context = {
         'interviewee_list': interviewee_list,
-        'room_list': room_list
+        'room_list': room_list,
+        "readonly": readonly
     }
     return render(request, 'interview/interviewee_index.html', context=context)
 
 
 @login_required
 def interviewee_checkin(request, interviewee_id):
-    if request.user.interviewer.interview_identity != 1:
+    """
+    签到
+    """
+    user_identity = request.user.interviewer.interview_identity
+    if user_identity != Interviewer.WAITING_ROOM:
         return Forbidden()
-    interviewee = get_object_or_404(models.Interviewee, pk=interviewee_id)
-    if interviewee.interview_status == 1:
-        interviewee.interview_status = 2
+
+    interviewee = get_object_or_404(Interviewee, pk=interviewee_id)
+
+    if interviewee.interview_status == Interviewee.NOT_CHECKED_IN:
+        interviewee.interview_status = Interviewee.CHECKED_IN
         interviewee.save()
-    else:
-        return Forbidden()
     return HttpResponseRedirect(reverse('interview:interviewee_index'))
 
 
 @login_required()
 def room_index(request, room_id):
-    if request.user.interviewer.interview_identity != 2:
-        return Forbidden()
-    if request.user.interviewer.room.id != room_id:
-        return Forbidden()
-    room = get_object_or_404(models.Room, pk=room_id)
-    interviewee_list = models.Interviewee.objects.filter(Q(assigned_room=room) | Q(
-        interview_status=2)).order_by('interview_status', 'assigned_datetime').all()
+    """
+    面试教室面试官的面试者列表，只显示侯场者和被拉来属于本教室的面试者
+    按照面试状态升序，分配时间降序排列
+    提供拉人功能和面试详情入口
+    """
+    user_identity = request.user.interviewer.interview_identity
+    user_room_id = request.user.interviewer.room.id
+    if user_identity == Interviewer.INTERVIEW_ROOM and user_room_id == room_id:
+        readonly = False
+    else:
+        readonly = True
+
+    room = get_object_or_404(Room, pk=room_id)
+    interviewee_list = Interviewee.objects\
+        .filter(Q(assigned_room=room) | Q(interview_status=Interviewee.CHECKED_IN))\
+        .order_by('interview_status', 'assigned_datetime').all()
     context = {
         'room_id': room_id,
-        'interviewee_list': interviewee_list
+        'interviewee_list': interviewee_list,
+        "readonly": readonly
     }
     return render(request, 'interview/room_index.html', context=context)
 
 
 @login_required()
 def room_interviewee_detail(request, room_id, interviewee_id):
-    if request.user.interviewer.interview_identity != 2:
+    """
+    面试官的面试者详情页面，侯场教室不能访问
+    提供评论和面试开始/结束
+    """
+    user_identity = request.user.interviewer.interview_identity
+    user_room_id = request.user.interviewer.room.id
+    if user_identity == Interviewer.INTERVIEW_ROOM and user_room_id == room_id:
+        readonly = False
+    else:
+        readonly = True
+
+    room = get_object_or_404(Room, pk=room_id)
+    interviewee = get_object_or_404(Interviewee, pk=interviewee_id)
+    if interviewee.interview_status < Interviewee.INTERVIEW_READY:
         return Forbidden()
-    if request.user.interviewer.room.id != room_id:
+    if interviewee.assigned_room_id != room.id:
         return Forbidden()
-    interviewee = get_object_or_404(models.Interviewee, pk=interviewee_id)
-    if interviewee.interview_status < 3:
-        return Forbidden()
-    if interviewee.assigned_room.id != room_id:
-        return Forbidden()
-    comment_list = models.Comment.objects.filter(interviewee=interviewee).all()
-    comment_form = models.PartialCommentForm()
+
+    comment_list = Comment.objects.filter(interviewee=interviewee).all()
+    comment_form = PartialCommentForm()
     context = {
         'room_id': room_id,
         'interviewee': interviewee,
         'comment_list': comment_list,
-        'comment_form': comment_form
+        'comment_form': comment_form,
+        "readonly": readonly
     }
     return render(request, 'interview/room_interviewee_detail.html', context=context)
 
 
 @login_required
 def interviewee_assign(request, room_id, interviewee_id):
-    if request.user.interviewer.interview_identity != 2:
+    """
+    将面试者分配到教室
+    """
+    user_identity = request.user.interviewer.interview_identity
+    user_room_id = request.user.interviewer.room.id
+    if user_identity != Interviewer.INTERVIEW_ROOM:
         return Forbidden()
-    if request.user.interviewer.room.id != room_id:
+    if user_room_id != room_id:
         return Forbidden()
-    room = get_object_or_404(models.Room, pk=room_id)
-    interviewee = get_object_or_404(models.Interviewee, pk=interviewee_id)
-    if interviewee.interview_status == 2:
-        interviewee.assigned_room = room
-        interviewee.interview_status = 3
-        interviewee.save()
-    else:
+
+    room = get_object_or_404(Room, pk=room_id)
+    interviewee = get_object_or_404(Interviewee, pk=interviewee_id)
+    if interviewee.interview_status < Interviewee.CHECKED_IN:
         return Forbidden()
+
+    if interviewee.interview_status == Interviewee.CHECKED_IN:
+        current_interviewee = Interviewee.objects\
+            .filter(Q(interview_status=Interviewee.INTERVIEW_READY) | Q(interview_status=Interviewee.INTERVIEW_STARTED))\
+            .filter(assigned_room=room).first()
+        if not current_interviewee:
+            interviewee.assigned_room = room
+            interviewee.interview_status = Interviewee.INTERVIEW_READY
+            interviewee.save()
+        else:
+            return HttpResponseRedirect(reverse('interview:room_index', args=(room_id, )))
+
     return HttpResponseRedirect(reverse('interview:room_interviewee_detail', args=(room_id, interviewee_id)))
 
 
 @login_required()
 def room_interviewee_start(request, room_id, interviewee_id):
-    if request.user.interviewer.interview_identity != 2:
+    """
+    面试者到教室，开始面试
+    """
+    user_identity = request.user.interviewer.interview_identity
+    user_room_id = request.user.interviewer.room.id
+    if user_identity != Interviewer.INTERVIEW_ROOM:
         return Forbidden()
-    if request.user.interviewer.room.id != room_id:
+    if user_room_id != room_id:
         return Forbidden()
-    interviewee = get_object_or_404(models.Interviewee, pk=interviewee_id)
-    if interviewee.assigned_room.id != room_id:
+
+    room = get_object_or_404(Room, pk=room_id)
+    interviewee = get_object_or_404(Interviewee, pk=interviewee_id)
+    if interviewee.interview_status < Interviewee.INTERVIEW_READY:
         return Forbidden()
-    if interviewee.interview_status == 3:
-        interviewee.interview_status = 4
+    if interviewee.assigned_room.id != room.id:
+        return Forbidden()
+
+    if interviewee.interview_status == Interviewee.INTERVIEW_READY:
+        interviewee.interview_status = Interviewee.INTERVIEW_STARTED
         interviewee.save()
-    else:
-        return Forbidden()
+
     return HttpResponseRedirect(reverse('interview:room_interviewee_detail', args=(room_id, interviewee_id)))
 
 
 @login_required()
 def room_interviewee_end(request, room_id, interviewee_id):
-    if request.user.interviewer.interview_identity != 2:
+    """
+    结束面试
+    """
+    user_identity = request.user.interviewer.interview_identity
+    user_room_id = request.user.interviewer.room.id
+    if user_identity != Interviewer.INTERVIEW_ROOM:
         return Forbidden()
-    if request.user.interviewer.room.id != room_id:
+    if user_room_id != room_id:
         return Forbidden()
-    interviewee = get_object_or_404(models.Interviewee, pk=interviewee_id)
-    if interviewee.assigned_room.id != room_id:
+
+    room = get_object_or_404(Room, pk=room_id)
+    interviewee = get_object_or_404(Interviewee, pk=interviewee_id)
+    if interviewee.assigned_room.id != room.id:
         return Forbidden()
-    if interviewee.interview_status == 4:
-        interviewee.interview_status = 5
+
+    if interviewee.interview_status == Interviewee.INTERVIEW_STARTED:
+        interviewee.interview_status = Interviewee.INTERVIEW_END
         interviewee.save()
-    else:
-        return Forbidden()
+
     return HttpResponseRedirect(reverse('interview:room_index', args=(room_id, )))
 
 
 @login_required()
 def room_interviewee_comment(request, room_id, interviewee_id):
-    if request.user.interviewer.interview_identity != 2:
+    """
+    给面试者添加评论
+    """
+    user_identity = request.user.interviewer.interview_identity
+    user_room_id = request.user.interviewer.room.id
+    if user_identity != Interviewer.INTERVIEW_ROOM:
         return Forbidden()
-    if request.user.interviewer.room.id != room_id:
+    if user_room_id != room_id:
         return Forbidden()
+
     if request.method == 'POST':
-        interviewee = get_object_or_404(models.Interviewee, pk=interviewee_id)
+        interviewee = get_object_or_404(Interviewee, pk=interviewee_id)
         if interviewee.assigned_room.id != room_id:
             return Forbidden()
-        if interviewee.interview_status < 4:
+        if interviewee.interview_status < Interviewee.INTERVIEW_READY:
             return Forbidden()
-        form = models.PartialCommentForm(request.POST)
+
+        form = PartialCommentForm(request.POST)
         if form.is_valid():
             comment = form.save(commit=False)
             comment.interviewer = request.user

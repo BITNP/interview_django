@@ -37,6 +37,7 @@
 
     <main role="main" class="container">
         <div class="jumbotron">
+            <a href="{% url 'interview:index' %}">返回</a>
             {% if interviewee_list %}
             <table class="table table-hover table-responsive m-auto">
                 <thead>
@@ -64,12 +65,14 @@
                         <td>{{ interviewee.second_preference }}</td>
                         
                         <td>
-                        {% if interviewee.interview_status == 1 %}
-                        <a href="{% url 'interview:interviewee_checkin' interviewee.id %}">
-                            <button type="button" class="btn btn-primary btn-block">签到</button>
-                        </a>
-                        {% else %}
-                        <button type="button" class="btn btn-secondary btn-block disabled">已签到</button>
+                        {% if not readonly %}
+                            {% if interviewee.interview_status == 1 %}
+                            <a href="{% url 'interview:interviewee_checkin' interviewee.id %}">
+                                <button type="button" class="btn btn-primary btn-block">签到</button>
+                            </a>
+                            {% else %}
+                            <button type="button" class="btn btn-secondary btn-block disabled">已签到</button>
+                            {% endif %}
                         {% endif %}
                         </td>
 
