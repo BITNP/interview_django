@@ -48,10 +48,14 @@
             {% if user.is_authenticated %}
                 <p>Hello, {{ user }}.</p>
                 {% if user.interviewer %}
+                    {% if user.interviewer.interview_identity != 3 %}
                     <p>Identity: {{ user.first_name }} - {{ user.interviewer.department }}</p>
                     <a href="{% url 'admission:department_index' user.interviewer.department.id %}">部门待录取队列</a>
                     <a href="{% url 'admission:department_admitted' user.interviewer.department.id %}">部门已录取人员</a>
                     <a href="{% url 'admission:final_queue_index' %}">捡漏队列</a>
+                    {% else %}
+                    <a href="{% url 'admission:department_admitted' 1 %}">部门已录取人员</a>
+                    {% endif %}
                 {% else %}
                 <p>No interview_identity for this user. Please contact admin.</p>
                 {% endif %}
