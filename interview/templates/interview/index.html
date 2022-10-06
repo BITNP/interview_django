@@ -52,7 +52,7 @@
                     Identity: {{ user.first_name }} - {{ user.interviewer.department }}
                     - {{ user.interviewer.get_interview_identity_display }} - {{ user.interviewer.room }}
                     </p>
-                    <p><a href="{% url 'interview:interviewee_index' %}">进入 侯场教室</a></p>
+                    <p><a href="{% url 'interview:interviewee_index' %}">进入 候场教室</a></p>
                     {% for room in room_list %}
                     <p><a href="{% url 'interview:room_index' room.id %}">进入 面试教室 - {{ room }}</a></p>
                     {% endfor %}
