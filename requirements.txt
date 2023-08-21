@@ -1,3 +1,4 @@
 django
-uwsgi
+uvicorn
+gunicorn
 mozilla-django-oidc
