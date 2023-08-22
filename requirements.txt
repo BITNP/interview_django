@@ -1,4 +1,4 @@
-django
-uvicorn
-gunicorn
-mozilla-django-oidc
+django~=4.2.4
+uvicorn~=0.23.2
+gunicorn~=21.2.0
+mozilla-django-oidc~=3.0.0
