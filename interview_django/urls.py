@@ -16,8 +16,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from django.shortcuts import redirect
+
+def redirect_index(request):
+    if request.method == 'GET':
+        return redirect('interview/')
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', redirect_index, name="redirect_index"),
     path('interview/', include('interview.urls')),
     path('admission/', include('admission.urls')),
     path('oidc/', include('mozilla_django_oidc.urls')),
