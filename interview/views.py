@@ -36,7 +36,7 @@ def public_index(request):
 @login_required
 def interviewee_index(request):
     """
-    侯场教室工作人员，提供更详细的信息和签到功能
+    候场教室工作人员，提供更详细的信息和签到功能
     列表显示面试未结束的人员，按照面试状态降序，时间升序
     """
     user_identity = request.user.interviewer.interview_identity
@@ -77,7 +77,7 @@ def interviewee_checkin(request, interviewee_id):
 @login_required()
 def room_index(request, room_id):
     """
-    面试教室面试官的面试者列表，只显示侯场者和被拉来属于本教室的面试者
+    面试教室面试官的面试者列表，只显示候场者和被拉来属于本教室的面试者
     按照面试状态升序，分配时间降序排列
     提供拉人功能和面试详情入口
     """

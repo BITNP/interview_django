@@ -23,7 +23,7 @@ class Interviewer(models.Model):
     INTERVIEW_ROOM = 2
     OBSERVER = 3
     INTERVIEW_IDENTITY = (
-        (WAITING_ROOM, "侯场教室"),
+        (WAITING_ROOM, "候场教室"),
         (INTERVIEW_ROOM, "面试教室"),
         (OBSERVER, "observer")
     )
