@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
             name='Interviewer',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('interview_identity', models.IntegerField(choices=[(1, '候场教室'), (2, '面试教室'), (3, 'observer')])),
+                ('interview_identity', models.IntegerField(choices=[(1, '候场教室'), (2, '面试教室'), (3, '围观')])),
                 ('department', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='interview.department')),
                 ('room', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='interview.room')),
                 ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),

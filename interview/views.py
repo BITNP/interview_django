@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, JsonResponse
 from django.views import generic
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
@@ -119,12 +119,10 @@ def room_interviewee_detail(request, room_id, interviewee_id):
     if interviewee.assigned_room_id != room.id:
         return Forbidden()
 
-    comment_list = Comment.objects.filter(interviewee=interviewee).all()
     comment_form = PartialCommentForm()
     context = {
         'room_id': room_id,
         'interviewee': interviewee,
-        'comment_list': comment_list,
         'comment_form': comment_form,
         "readonly": readonly
     }
@@ -238,3 +236,19 @@ def room_interviewee_comment(request, room_id, interviewee_id):
             comment.interviewee = interviewee
             comment.save()
     return HttpResponseRedirect(reverse('interview:room_interviewee_detail', args=(room_id, interviewee_id)))
+
+@login_required()
+def interviewee_comment_api(request, interviewee_id):
+    """
+    获取评论的api
+    """
+    interviewee = get_object_or_404(Interviewee, pk=interviewee_id)
+    if interviewee.interview_status < Interviewee.INTERVIEW_READY:
+        return Forbidden()
+
+    comment_list = Comment.objects.filter(interviewee=interviewee).all()
+    resp = []
+    for comment in comment_list:
+        comment_dict = {"content": comment.content, "name": comment.interviewer.first_name}
+        resp.append(comment_dict)
+    return JsonResponse(resp)

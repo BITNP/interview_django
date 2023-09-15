@@ -26,4 +26,6 @@ urlpatterns = [
          views.room_interviewee_end, name='room_interviewee_end'),
     path('rooms/<int:room_id>/interviewees/<int:interviewee_id>/comment',
          views.room_interviewee_comment, name='room_interviewee_comment'),
+     path('api/interviewees/<int:interviewee_id>/comment',
+         views.interviewee_comment_api, name='interviewee_comment_api')
 ]

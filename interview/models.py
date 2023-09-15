@@ -25,7 +25,7 @@ class Interviewer(models.Model):
     INTERVIEW_IDENTITY = (
         (WAITING_ROOM, "候场教室"),
         (INTERVIEW_ROOM, "面试教室"),
-        (OBSERVER, "observer")
+        (OBSERVER, "围观")
     )
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     interview_identity = models.IntegerField(choices=INTERVIEW_IDENTITY)

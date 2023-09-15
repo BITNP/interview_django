@@ -33,11 +33,11 @@
             </ul>
             <form class="form-inline my-2 my-lg-0" action="{% url 'oidc_logout' %}" method="post">
                 {% csrf_token %}
-                <button class="btn btn-success my-2 my-sm-0" type="submit">logout</button>
+                <button class="btn btn-success my-2 my-sm-0" type="submit">注销</button>
             </form>
             {% else %}
             <form class="form-inline my-2 my-lg-0" action="{% url 'oidc_authentication_init' %}">
-                <button class="btn btn-info my-2 my-sm-0" type="submit">login</button>
+                <button class="btn btn-info my-2 my-sm-0" type="submit">登录</button>
             </form>
             {% endif %}
         </div>
@@ -46,10 +46,10 @@
     <main role="main" class="container">
         <div class="jumbotron">
             {% if user.is_authenticated %}
-                <p>Hello, {{ user }}.</p>
+                <p>欢迎进入网协面试系统，{{ user }}。</p>
                 {% if user.interviewer %}
                     {% if user.interviewer.interview_identity != 3 %}
-                    <p>Identity: {{ user.first_name }} - {{ user.interviewer.department }}</p>
+                    <p>{{ user.first_name }}，系统中你的部门是{{ user.interviewer.department }}。</p>
                     <a href="{% url 'admission:department_index' user.interviewer.department.id %}">部门待录取队列</a>
                     <a href="{% url 'admission:department_admitted' user.interviewer.department.id %}">部门已录取人员</a>
                     <a href="{% url 'admission:final_queue_index' %}">捡漏队列</a>
@@ -57,10 +57,10 @@
                     <a href="{% url 'admission:department_admitted' 1 %}">部门已录取人员</a>
                     {% endif %}
                 {% else %}
-                <p>No interview_identity for this user. Please contact admin.</p>
+                <p>在系统中此用户 {{ user }} 没有面试官身份（interview_identity），请联系管理员。</p>
                 {% endif %}
             {% else %}
-                <p>Please log in.</p>
+                <p>请使用网协通行证登录系统。</p> 
             {% endif %}
         </div>
     </main>

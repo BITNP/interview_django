@@ -32,12 +32,12 @@
             </ul>
             <form class="form-inline my-2 my-lg-0" action="{% url 'oidc_logout' %}" method="post">
                 {% csrf_token %}
-                <button class="btn btn-success my-2 my-sm-0" type="submit">logout</button>
+                <button class="btn btn-success my-2 my-sm-0" type="submit">注销</button>
             </form>
             {% else %}
             <ul class="navbar-nav mr-auto"></ul>
             <form class="form-inline my-2 my-lg-0" action="{% url 'oidc_authentication_init' %}">
-                <button class="btn btn-info my-2 my-sm-0" type="submit">login</button>
+                <button class="btn btn-info my-2 my-sm-0" type="submit">登录</button>
             </form>
             {% endif %}
         </div>
@@ -46,21 +46,24 @@
     <main role="main" class="container">
         <div class="jumbotron">
             {% if user.is_authenticated %}
-                <p>Hello, {{ user }}.</p>
+                <p>欢迎进入网协面试系统，{{ user }}。</p>
                 {% if user.interviewer %}
                     <p>
-                    Identity: {{ user.first_name }} - {{ user.interviewer.department }}
-                    - {{ user.interviewer.get_interview_identity_display }} - {{ user.interviewer.room }}
+                    {{ user.first_name }}，系统中你的部门是{{ user.interviewer.department }}。
+                    <br>
+                    系统中你的身份是 {{ user.interviewer.get_interview_identity_display }} 位于房间 {{ user.interviewer.room }}。
+                    <br>
+                    上述信息若有错误请联系管理员更正。
                     </p>
                     <p><a href="{% url 'interview:interviewee_index' %}">进入 候场教室</a></p>
                     {% for room in room_list %}
                     <p><a href="{% url 'interview:room_index' room.id %}">进入 面试教室 - {{ room }}</a></p>
                     {% endfor %}
                 {% else %}
-                <p>No interview_identity for this user. Please contact admin.</p>
+                <p>在系统中此用户 {{ user }} 没有面试官身份（interview_identity），请联系管理员。</p>
                 {% endif %}
             {% else %}
-                <p>Please log in.</p> 
+                <p>请使用网协通行证登录系统。</p> 
             {% endif %}
         </div>
     </main>
