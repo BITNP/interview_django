@@ -23,4 +23,5 @@ urlpatterns = [
     path('interview/', include('interview.urls')),
     path('admission/', include('admission.urls')),
     path('oidc/', include('mozilla_django_oidc.urls')),
+    path('api/', include('interview.api_urls')),
 ]

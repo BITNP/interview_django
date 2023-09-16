@@ -3,7 +3,6 @@
 
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="refresh" content="5">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>网协面试系统</title>
     {% load static %}
@@ -38,61 +37,83 @@
     <main role="main" class="container">
         <div class="jumbotron">
             <a href="{% url 'interview:index' %}">返回</a>
-            {% if interviewee_list %}
-            <table class="table table-hover table-responsive m-auto">
-                <thead>
-                    <tr>
-                        <th>签到时间</th>
-                        <th>姓名</th>
-                        <th>性别</th>
-                        <th>学号</th>
-                        <th>状态</th>
-                        <th>一志愿</th>
-                        <th>二志愿</th>
-                        <th>签到</th>
-                        <th>面试教室</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for interviewee in interviewee_list %}
-                    <tr class="warning">
-                        <td>{{ interviewee.assigned_datetime | date:"Y-m-d H:i:s" }}</td>
-                        <td>{{ interviewee.name }}</td>
-                        <td>{{ interviewee.sex }}</td>
-                        <td>{{ interviewee.student_id }}</td>
-                        <td>{{ interviewee.get_interview_status_display }}</td>
-                        <td>{{ interviewee.first_preference }}</td>
-                        <td>{{ interviewee.second_preference }}</td>
-                        
-                        <td>
-                        {% if not readonly %}
-                            {% if interviewee.interview_status == 1 %}
-                            <a href="{% url 'interview:interviewee_checkin' interviewee.id %}">
-                                <button type="button" class="btn btn-primary btn-block">签到</button>
-                            </a>
-                            {% else %}
-                            <button type="button" class="btn btn-secondary btn-block disabled">已签到</button>
-                            {% endif %}
-                        {% endif %}
-                        </td>
-
-                        <td>
-                            {% if interviewee.assigned_room %}
-                            <button type="button" class="btn btn-success btn-block">已指派 {{ interviewee.assigned_room }}</button>
-                            {% else %}
-                            <button type="button" class="btn btn-info btn-block">未指派</button>
-                            {% endif %}
-                        </td>
-
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p>还没有面试者。</p>
-            {% endif %}
+            <div id="table_div"></div>
         </div>
     </main>
 </body>
+
+<script>
+    var charMap = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+      '/': '&#x2F;',
+      '`': '&#x60;',
+      '=': '&#x3D;'
+    };
+    
+    function escapeHtml(string) {
+      return String(string).replace(/[&<>"'`=\/]/g, function (s) {
+        return charMap[s];
+      });
+    }
+    
+    function get_interviewees() {
+        $.ajax({
+            url: "/api/interviewees/",
+            method: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                let html = '';
+                if (data.length == 0) {
+                    html += '<p>还没有面试者。</p>';
+                } else {
+                    html += '<table class="table table-hover table-responsive m-auto">';
+                    html += '<thead><tr><th>签到时间</th><th>姓名</th><th>性别</th><th>学号</th><th>状态</th><th>一志愿</th><th>二志愿</th><th>签到</th><th>面试教室</th></tr></thead>';
+                    html += '<tbody>';
+                    $.each(data, function(index, item) {
+                        html += '<tr class="warning">';
+                        html += '<td>' + escapeHtml(item.assigned_datetime) + "</td>";
+                        html += '<td>' + escapeHtml(item.name) + "</td>";
+                        html += '<td>' + escapeHtml(item.sex) + "</td>";
+                        html += '<td>' + escapeHtml(item.student_id) + "</td>";
+                        html += '<td>' + escapeHtml(item.interview_status) + "</td>";
+                        html += '<td>' + escapeHtml(item.first_preference) + "</td>";
+                        html += '<td>' + escapeHtml(item.second_preference) + "</td>";
+                        html += '<td>';
+                        if (!item.readonly) {
+                            if(item.interview_status == 1) {
+                                html += '<a href="interviewees/'+ escapeHtml(item.id) +'/checkin">';
+                                html += '<button type="button" class="btn btn-primary btn-block">签到</button></a>';
+                            } else {
+                                html += '<button type="button" class="btn btn-secondary btn-block disabled">已签到</button>';
+                            }
+                        }
+                        html += '</td>';
+                        html += '<td>';
+                        if (item.assigned_room) {
+                            html += '<button type="button" class="btn btn-success btn-block">已指派' + escapeHtml(item.assigned_room) + '</button>';
+                        } else {
+                            html += '<button type="button" class="btn btn-info btn-block">未指派</button>';
+                        }
+                        html += '</td></tr>';
+                    });
+                    html += '</tbody></table>';
+                }
+                $('#table_div').html(html);
+            },
+            error: function(xhr, status, error) {
+                const html = '<p>数据获取错误，请检查网络或联系管理员。</p>';
+                $('#table_div').html(html);
+            }
+        });
+    }
+    $("document").ready(function () {
+        get_interviewees();
+        setInterval(get_interviewees, 5000);
+    })
+</script>
 
 </html>

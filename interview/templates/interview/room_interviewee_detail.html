@@ -126,7 +126,7 @@ function escapeHtml(string) {
 function get_interviewee_comments() {
     const interviewee_id = {{ interviewee.id }};
     $.ajax({
-        url: "/interview/api/interviewees/" + interviewee_id + "/comment",
+        url: "/api/interviewees/" + interviewee_id + "/comment",
         method: 'GET',
         dataType: 'json',
         success: function(data) {
@@ -136,7 +136,7 @@ function get_interviewee_comments() {
             } else {
                 html += '<ul class="list-group">';
                 $.each(data, function(index, item) {
-                html += '<li class="list-group-item">' + escapeHtml(item.name) + "：" + escapeHtml(item.content) + '</li>';
+                    html += '<li class="list-group-item">' + escapeHtml(item.name) + "：" + escapeHtml(item.content) + '</li>';
                 });
                 html += '</ul>';
             }

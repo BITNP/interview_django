@@ -6,13 +6,13 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from .models import *
-import datetime
+from django.utils import timezone
 
 # Create your views here.
 
 
 def Forbidden():
-    return HttpResponseForbidden("<h1>Forbidden</h1><p>If you think this should not happen, please contact the project maintainer.</p>")
+    return HttpResponseForbidden("<h1>Forbidden</h1><p>If you think that this is a bug, please contact the project maintainer.</p>")
 
 
 def index(request):
@@ -40,22 +40,7 @@ def interviewee_index(request):
     候场教室工作人员，提供更详细的信息和签到功能
     列表显示面试未结束的人员，按照面试状态降序，时间升序
     """
-    user_identity = request.user.interviewer.interview_identity
-    if user_identity == Interviewer.WAITING_ROOM:
-        readonly = False
-    else:
-        readonly = True
-
-    room_list = Room.objects.all()
-    interviewee_list = Interviewee.objects\
-        .filter(interview_status__lt=Interviewee.INTERVIEW_END)\
-        .order_by('-interview_status', 'assigned_datetime').all()
-    context = {
-        'interviewee_list': interviewee_list,
-        'room_list': room_list,
-        "readonly": readonly
-    }
-    return render(request, 'interview/interviewee_index.html', context=context)
+    return render(request, 'interview/interviewee_index.html')
 
 
 @login_required
@@ -71,7 +56,7 @@ def interviewee_checkin(request, interviewee_id):
 
     if interviewee.interview_status == Interviewee.NOT_CHECKED_IN:
         interviewee.interview_status = Interviewee.CHECKED_IN
-        interviewee.assigned_datetime = datetime.datetime.now()
+        interviewee.assigned_datetime = timezone.now()
         interviewee.save()
     return HttpResponseRedirect(reverse('interview:interviewee_index'))
 
@@ -253,4 +238,34 @@ def interviewee_comment_api(request, interviewee_id):
     for comment in comment_list:
         comment_dict = {"content": comment.content, "name": comment.interviewer.first_name}
         resp.append(comment_dict)
+    return JsonResponse(resp, safe=False)
+
+@login_required()
+def interviewee_list_api(request):
+    """
+    获取面试者的api
+    """
+    user_identity = request.user.interviewer.interview_identity
+    if user_identity == Interviewer.WAITING_ROOM:
+        readonly = False
+    else:
+        readonly = True
+
+    interviewee_list = Interviewee.objects\
+        .filter(interview_status__lt=Interviewee.INTERVIEW_END)\
+        .order_by('-interview_status', 'assigned_datetime').all()
+    resp = []
+    for interviewee in interviewee_list:
+        interviewee_dict = {"readonly": readonly,
+                            "id": interviewee.id,
+                            "assigned_datetime": interviewee.assigned_datetime.astimezone().strftime("%Y-%m-%d %H:%M:%S"),
+                            "name": interviewee.name,
+                            "sex": interviewee.sex,
+                            "student_id": interviewee.student_id,
+                            "interview_status": interviewee.interview_status,
+                            "interview_status_display": interviewee.get_interview_status_display(),
+                            "first_preference": interviewee.first_preference.name,
+                            "second_preference": interviewee.second_preference.name,
+                            "assigned_room": interviewee.assigned_room}
+        resp.append(interviewee_dict)
     return JsonResponse(resp, safe=False)
