@@ -88,6 +88,7 @@
             <div id="comment">
                 <div class="mb-5" id="comment_list_div">
                     <!-- for get_interviewee_comments() -->
+                    <ul class="list-group"><li class="list-group-item">正在加载......</li></ul>
                 </div>
                 {% if not readonly %}
                 <form action="{% url 'interview:room_interviewee_comment' room_id interviewee.id %}" method="post" id="comment_form">
@@ -108,7 +109,7 @@
 function get_interviewee_comments() {
     const interviewee_id = {{ interviewee.id }};
     $.ajax({
-        url: "api/interviewees/" + interviewee_id + "/comment",
+        url: "/interview/api/interviewees/" + interviewee_id + "/comment",
         method: 'GET',
         dataType: 'json',
         success: function(data) {
@@ -132,7 +133,7 @@ function get_interviewee_comments() {
 }
 $("document").ready(function () {
     get_interviewee_comments();
-    setInterval(get_interviewee_comments, 1000);
+    setInterval(get_interviewee_comments, 1500);
 })
 
 $("#id_content").keydown(function(event){

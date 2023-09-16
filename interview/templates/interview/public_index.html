@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="refresh" content="10">
+    <meta http-equiv="refresh" content="5">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>网协面试系统</title>
     {% load static %}
@@ -28,7 +28,7 @@
                 <tbody>
                     {% for interviewee in interviewee_list %}
                     <tr class="warning">
-                        <td>{{ interviewee.assigned_datetime }}</td>
+                        <td>{{ interviewee.assigned_datetime | date:"Y-m-d H:i:s" }}</td>
                         <td>{{ interviewee.name }}</td>
                         <td>
                             <button type="button" class="btn btn-success btn-block">

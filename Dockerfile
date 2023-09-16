@@ -8,7 +8,7 @@ RUN rm /etc/apt/sources.list.d/debian.sources && \
     apt-get update && \
     apt-get install -y nginx tini && \
     rm -rf /var/lib/apt/lists/* && \
-    sed -i 's/worker_processes auto/worker_processes 2/g' /etc/nginx/nginx.conf && \
+    sed -i 's/worker_processes auto/worker_processes 4/g' /etc/nginx/nginx.conf && \
     pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
     pip install -r requirements.txt --no-cache-dir && \
     python3 manage.py collectstatic --noinput

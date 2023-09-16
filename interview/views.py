@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from .models import *
+import datetime
 
 # Create your views here.
 
@@ -70,6 +71,7 @@ def interviewee_checkin(request, interviewee_id):
 
     if interviewee.interview_status == Interviewee.NOT_CHECKED_IN:
         interviewee.interview_status = Interviewee.CHECKED_IN
+        interviewee.assigned_datetime = datetime.datetime.now()
         interviewee.save()
     return HttpResponseRedirect(reverse('interview:interviewee_index'))
 
@@ -251,4 +253,4 @@ def interviewee_comment_api(request, interviewee_id):
     for comment in comment_list:
         comment_dict = {"content": comment.content, "name": comment.interviewer.first_name}
         resp.append(comment_dict)
-    return JsonResponse(resp)
+    return JsonResponse(resp, safe=False)
