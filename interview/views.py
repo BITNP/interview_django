@@ -256,6 +256,9 @@ def interviewee_list_api(request):
         .order_by('-interview_status', 'assigned_datetime').all()
     resp = []
     for interviewee in interviewee_list:
+        fpn = interviewee.first_preference.name if interviewee.first_preference else ""
+        spn = interviewee.second_preference.name if interviewee.second_preference else ""
+        rn = interviewee.assigned_room.name if interviewee.assigned_room else ""
         interviewee_dict = {"readonly": readonly,
                             "id": interviewee.id,
                             "assigned_datetime": interviewee.assigned_datetime.astimezone().strftime("%Y-%m-%d %H:%M:%S"),
@@ -264,8 +267,8 @@ def interviewee_list_api(request):
                             "student_id": interviewee.student_id,
                             "interview_status": interviewee.interview_status,
                             "interview_status_display": interviewee.get_interview_status_display(),
-                            "first_preference": interviewee.first_preference.name,
-                            "second_preference": interviewee.second_preference.name,
-                            "assigned_room": interviewee.assigned_room}
+                            "first_preference": fpn,
+                            "second_preference": spn,
+                            "assigned_room": rn}
         resp.append(interviewee_dict)
     return JsonResponse(resp, safe=False)
