@@ -37,13 +37,23 @@
     <main role="main" class="container">
         <div class="jumbotron">
             <a href="{% url 'interview:index' %}">返回</a>
+            <div id="search_div">
+                <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon3">输入学号，回车搜索</span>
+                  </div>
+                  <input type="text" class="form-control" aria-describedby="basic-addon3" name="q" id="student_search">
+                </div>
+                <table class="table table-hover table-responsive m-auto" id="search_table"></table>
+            </div>
             <div id="table_div"></div>
         </div>
     </main>
 </body>
 
 <script>
-    var charMap = {
+    var interviewee_list;
+    const charMap = {
       '&': '&amp;',
       '<': '&lt;',
       '>': '&gt;',
@@ -53,19 +63,49 @@
       '`': '&#x60;',
       '=': '&#x3D;'
     };
-    
     function escapeHtml(string) {
       return String(string).replace(/[&<>"'`=\/]/g, function (s) {
         return charMap[s];
       });
     }
-    
+    function render_interviewee_row(item) {
+        let html = '<tr class="warning">';
+        html += '<td>' + escapeHtml(item.assigned_datetime) + "</td>";
+        html += '<td>' + escapeHtml(item.name) + "</td>";
+        html += '<td>' + escapeHtml(item.sex) + "</td>";
+        html += '<td>' + escapeHtml(item.student_id) + "</td>";
+        html += '<td>' + escapeHtml(item.interview_status_display) + "</td>";
+        html += '<td>' + escapeHtml(item.first_preference) + "</td>";
+        html += '<td>' + escapeHtml(item.second_preference) + "</td>";
+        html += '<td>';
+        if (!item.readonly) {
+            if(item.interview_status == 1) {
+                html += '<a href="interviewees/'+ escapeHtml(item.id) +'/checkin">';
+                html += '<button type="button" class="btn btn-primary btn-block">签到</button></a>';
+            } else {
+                html += '<button type="button" class="btn btn-secondary btn-block disabled">已签到</button>';
+            }
+        }
+        html += '</td>';
+        html += '<td>';
+        if (item.assigned_room) {
+            html += '<button type="button" class="btn btn-success btn-block">已指派' + escapeHtml(item.assigned_room) + '</button>';
+        } else {
+            html += '<button type="button" class="btn btn-info btn-block">未指派</button>';
+        }
+        html += '</td></tr>';
+        return html
+    }
     function get_interviewees() {
         $.ajax({
             url: "/api/interviewees/",
             method: 'GET',
             dataType: 'json',
             success: function(data) {
+                // save data for search and update search results
+                interviewee_list = data;
+                update_search_results();
+                // update interviewee table
                 let html = '';
                 if (data.length == 0) {
                     html += '<p>还没有面试者。</p>';
@@ -73,32 +113,8 @@
                     html += '<table class="table table-hover table-responsive m-auto">';
                     html += '<thead><tr><th>签到时间</th><th>姓名</th><th>性别</th><th>学号</th><th>状态</th><th>一志愿</th><th>二志愿</th><th>签到</th><th>面试教室</th></tr></thead>';
                     html += '<tbody>';
-                    $.each(data, function(index, item) {
-                        html += '<tr class="warning">';
-                        html += '<td>' + escapeHtml(item.assigned_datetime) + "</td>";
-                        html += '<td>' + escapeHtml(item.name) + "</td>";
-                        html += '<td>' + escapeHtml(item.sex) + "</td>";
-                        html += '<td>' + escapeHtml(item.student_id) + "</td>";
-                        html += '<td>' + escapeHtml(item.interview_status_display) + "</td>";
-                        html += '<td>' + escapeHtml(item.first_preference) + "</td>";
-                        html += '<td>' + escapeHtml(item.second_preference) + "</td>";
-                        html += '<td>';
-                        if (!item.readonly) {
-                            if(item.interview_status == 1) {
-                                html += '<a href="interviewees/'+ escapeHtml(item.id) +'/checkin">';
-                                html += '<button type="button" class="btn btn-primary btn-block">签到</button></a>';
-                            } else {
-                                html += '<button type="button" class="btn btn-secondary btn-block disabled">已签到</button>';
-                            }
-                        }
-                        html += '</td>';
-                        html += '<td>';
-                        if (item.assigned_room) {
-                            html += '<button type="button" class="btn btn-success btn-block">已指派' + escapeHtml(item.assigned_room) + '</button>';
-                        } else {
-                            html += '<button type="button" class="btn btn-info btn-block">未指派</button>';
-                        }
-                        html += '</td></tr>';
+                    $.each(data, function(index, interviewee) {
+                        html += render_interviewee_row(interviewee)
                     });
                     html += '</tbody></table>';
                 }
@@ -110,9 +126,33 @@
             }
         });
     }
+    function update_search_results() {
+        let html = '';
+        let val = $("#student_search").val();
+        if (val.length >= 3) {
+            $.each(interviewee_list, function(index, interviewee) {
+                if (interviewee.student_id.includes(val)) {
+                    html += render_interviewee_row(interviewee)
+                }
+            });
+            if (html === "") {
+                html += '<tr><td>没有结果</td></tr>';
+            }
+        } else {
+            html += '<tr><td>至少输入三位数字进行搜索</td></tr>';
+        }
+        $('#search_table').html(html);
+    }
     $("document").ready(function () {
         get_interviewees();
         setInterval(get_interviewees, 5000);
+    })
+    $("#student_search").keydown(function(event){
+        event=(event)?event:((window.event) ? window.event : "");
+        let keyCode=event.keyCode?event.keyCode:(event.which?event.which:event.charCode);
+        if(keyCode == 13) {
+            update_search_results();
+        }
     })
 </script>
 
