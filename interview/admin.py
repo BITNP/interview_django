@@ -25,3 +25,9 @@ class UserAdmin(BaseUserAdmin):
 class IntervieweeAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'majar_text', 'interview_status',
                     'first_preference', 'second_preference', 'admitted_department')
+    list_filter = (
+        "interview_status",
+        "first_preference",
+        "second_preference",
+        "admitted_department",
+    )
