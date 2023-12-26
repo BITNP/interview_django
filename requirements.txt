@@ -1,4 +1,4 @@
-django~=4.2.4
-gunicorn~=21.2.0
+django~=5.0
+gunicorn
 mozilla-django-oidc~=3.0.0
 eventlet

@@ -1,4 +1,4 @@
-FROM python:3-slim
+FROM python:3.12-slim
 ENV DJANGO_PRODUCTION=1
 COPY . /usr/src/app
 WORKDIR /usr/src/app
