@@ -1,12 +1,14 @@
 version: "3"
 services:
   interview_django:
-    image: everything411/interview-bitnp
+    # image: everything411/interview-bitnp
+    build: .
     restart: always
     environment:
       SECRET_KEY: ${SECRET_KEY} # you must change that before deploy
       OIDC_RP_CLIENT_ID: ${OIDC_RP_CLIENT_ID}
       OIDC_RP_CLIENT_SECRET: ${OIDC_RP_CLIENT_SECRET}
+      DJANGO_PRODUCTION: 1
     ports:
       - 80:80
     volumes:

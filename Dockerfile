@@ -1,5 +1,4 @@
 FROM python:3.12-slim
-ENV DJANGO_PRODUCTION=1
 COPY . /usr/src/app
 WORKDIR /usr/src/app
 
@@ -11,7 +10,9 @@ RUN rm /etc/apt/sources.list.d/debian.sources && \
     sed -i 's/worker_processes auto/worker_processes 4/g' /etc/nginx/nginx.conf && \
     pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
     pip install -r requirements.txt --no-cache-dir && \
-    python3 manage.py collectstatic --noinput
+    python3 manage.py collectstatic --noinput && \
+    mkdir -p /usr/src/app/logs/nginx && \
+    mkdir -p /usr/src/app/logs/gunicorn
 
 COPY deploy/nginx-app.conf /etc/nginx/sites-available/default
 EXPOSE 80

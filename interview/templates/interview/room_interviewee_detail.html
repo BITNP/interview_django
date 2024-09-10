@@ -1,111 +1,129 @@
 <!DOCTYPE html>
 <html>
-
-<head>
-    <meta charset="utf-8">
+  <head>
+    <meta charset="utf-8" />
     <title>网协面试系统</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     {% load static %}
-    <link href="{% static "interview/bootstrap.min.css" %}" rel="stylesheet">
-    <script src="{% static "interview/jquery.min.js" %}"></script>
-    <script src="{% static "interview/bootstrap.min.js" %}"></script>
-</head>
+    <link href="{% static 'interview/bootstrap.min.css' %}" rel="stylesheet" />
+    <script src="{% static 'interview/jquery.min.js' %}"></script>
+    <script src="{% static 'interview/bootstrap.min.js' %}"></script>
+  </head>
 
-<body>
+  <body>
     <nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
-        <a class="navbar-brand" href="#">网协面试系统</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse"
-            aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarCollapse">
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item active">
-                    <a class="nav-link" href="{% url 'interview:index' %}">面试系统 <span
-                            class="sr-only">(current)</span></a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'admission:index'%}">录取系统</a>
-                </li>
-            </ul>
-            <form class="form-inline my-2 my-lg-0" action="{% url 'oidc_logout' %}" method="post">
-                {% csrf_token %}
-                <button class="btn btn-success my-2 my-sm-0" type="submit">注销</button>
-            </form>
-        </div>
+      <a class="navbar-brand" href="#">网协面试系统</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+      <div class="collapse navbar-collapse" id="navbarCollapse">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="{% url 'interview:index' %}">面试系统 <span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admission:index' %}">录取系统</a>
+          </li>
+        </ul>
+        <form class="form-inline my-2 my-lg-0" action="{% url 'oidc_logout' %}" method="post">
+          {% csrf_token %}
+          <button class="btn btn-success my-2 my-sm-0" type="submit">注销</button>
+        </form>
+      </div>
     </nav>
 
     <main role="main" class="container">
-        <div class="jumbotron">
-            <a href="{% url 'interview:room_index' room_id %}">返回</a>
-            <div id="student">
-                <table class="table table-hover table-responsive m-auto">
-                    <thead>
-                        <tr>
-                            <th>姓名</th>
-                            <th>性别</th>
-                            <th>学号</th>
-                            <th>专业</th>
-                            <th>接受调剂</th>
-                            <th>一志愿</th>
-                            <th>二志愿</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="warning">
-                            <td>{{ interviewee.name }}</td>
-                            <td>{{ interviewee.sex }}</td>
-                            <td>{{ interviewee.student_id }}</td>
-                            <td>{{ interviewee.majar_text }}</td>
-                            <td>{{ interviewee.accept_adjust }}</td>
-                            <td>{{ interviewee.first_preference }}</td>
-                            <td>{{ interviewee.second_preference }}</td>
-                            <td>
-                                {% if not readonly %}
-                                    {% if interviewee.interview_status == 3 %}
-                                    <a href="{% url 'interview:room_interviewee_start' room_id interviewee.id %}">
-                                        <button type="button" class="btn btn-success btn-block">开始面试</button>
-                                    </a>
-                                    {% elif interviewee.interview_status == 4 %}
-                                    <a href="{% url 'interview:room_interviewee_end' room_id interviewee.id %}">
-                                        <button type="button" class="btn btn-danger btn-block">结束面试</button>
-                                    </a>
-                                    {% else %}
-                                        <button type="button" class="btn btn-secondary btn-block disable">面试已结束</button>
-                                    {% endif %}
-                                {% endif %}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <ul class="list-group mb-5">
-                    <li class="list-group-item">{{ interviewee.introduction_text | linebreaksbr }}</li>
-                </ul>
-            </div>
-
-
-            <div id="comment">
-                <div class="mb-5" id="comment_list_div">
-                    <!-- for get_interviewee_comments() -->
-                    <ul class="list-group"><li class="list-group-item">正在加载......</li></ul>
-                </div>
-                {% if not readonly %}
-                <form action="{% url 'interview:room_interviewee_comment' room_id interviewee.id %}" method="post" id="comment_form">
-                    {% csrf_token %}
-                    <label for="id_content">评论:</label>
-                    <br>
-                    <textarea class="form-control" name="content" rows="3" required="" id="id_content"></textarea>
-                    <br>
-                    <input type="submit" value="提交">
-                </form>
-                {% endif %}
-            </div>
+      <div class="jumbotron">
+        <a href="{% url 'interview:room_index' room_id %}">返回</a>
+        <div id="student">
+          <table class="table table-hover table-responsive m-auto">
+            <thead>
+              <tr>
+                <th>姓名</th>
+                <th>性别</th>
+                <th>学号</th>
+                <th>专业</th>
+                <th>接受调剂</th>
+                <th>一志愿</th>
+                <th>二志愿</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="warning">
+                <td>{{ interviewee.name }}</td>
+                <td>{{ interviewee.sex }}</td>
+                <td>{{ interviewee.student_id }}</td>
+                <td>{{ interviewee.majar_text }}</td>
+                <td>{{ interviewee.accept_adjust }}</td>
+                <td>{{ interviewee.first_preference }}</td>
+                <td>{{ interviewee.second_preference }}</td>
+                <td>
+                  {% if not readonly %}
+                    {% if interviewee.interview_status == 3 %}
+                      <a href="{% url 'interview:room_interviewee_start' room_id interviewee.id %}"><button type="button" class="btn btn-success btn-block">开始面试</button></a>
+                    {% elif interviewee.interview_status == 4 %}
+                      <a href="{% url 'interview:room_interviewee_end' room_id interviewee.id %}"><button type="button" class="btn btn-danger btn-block">结束面试</button></a>
+                    {% else %}
+                      <button type="button" class="btn btn-secondary btn-block disable">面试已结束</button>
+                    {% endif %}
+                  {% endif %}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <ul class="list-group mb-5">
+            <li class="list-group-item">{{ interviewee.introduction_text|linebreaksbr }}</li>
+          </ul>
         </div>
-    </main>
-</body>
 
-<script>
+        <div id="comment">
+          <div class="mb-5" id="comment_list_div">
+            <!-- for get_interviewee_comments() -->
+            <ul class="list-group">
+              <li class="list-group-item">正在加载......</li>
+            </ul>
+          </div>
+          {% if not readonly %}
+            <form action="{% url 'interview:room_interviewee_comment' room_id interviewee.id %}" method="post" id="comment_form">
+              {% csrf_token %}
+              <label for="id_content">评论:</label>
+              <br />
+              <textarea class="form-control" name="content" rows="3" required="" id="id_content"></textarea>
+              <br />
+              <input type="submit" value="评论" />
+            </form>
+          {% endif %}
+        </div>
+
+        <div id="judge">
+          <div class="my-5" id="judge_list_div">
+            <ul class="list-group">
+              <li class="list-group-item">正在加载......</li>
+            </ul>
+          </div>
+          {% if not readonly %}
+            <form action="{% url 'interview:room_interviewee_judge' room_id interviewee.id %}" method="post" id="judge_form">
+              {% csrf_token %}
+              <label for="id_rep">表达:</label>
+              <br />
+              <textarea class="form-control" name="representation" rows="2" required="" id="id_rep"></textarea>
+              <br />
+              <label for="id_abi">能力:</label>
+              <br />
+              <textarea class="form-control" name="ability" rows="2" required="" id="id_abi"></textarea>
+              <br />
+              <label for="id_cog">对网协的认识:</label>
+              <br />
+              <textarea class="form-control" name="cognition" rows="2" required="" id="id_cog"></textarea>
+              <br />
+              <input type="submit" value="提交评价" />
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </main>
+  </body>
+
+  <script>
 var charMap = {
   '&': '&amp;',
   '<': '&lt;',
@@ -148,8 +166,36 @@ function get_interviewee_comments() {
         }
     });
 }
+
+function get_interviewee_judge() {
+  const interviewee_id = {{ interviewee.id }};
+  $.ajax({
+      url: "/api/interviewees/" + interviewee_id + "/judge",
+      method: 'GET',
+      dataType: 'json',
+      success: function(data) {
+          let html = '';
+          if (data.length == 0) {
+              html += '<ul class="list-group"><li class="list-group-item">还没有评价。</li></ul>';
+          } else {
+              html += '<ul class="list-group">';
+              $.each(data, function(index, item) {
+                  html += '<li class="list-group-item">' + escapeHtml(item.name) + "：" + escapeHtml(item.content) + '</li>';
+              });
+              html += '</ul>';
+          }
+          $('#judge_list_div').html(html);
+      },
+      error: function(xhr, status, error) {
+          const html = '<ul class="list-group"><li class="list-group-item">评价获取错误，请检查网络或联系管理员。</li></ul>';
+          $('#judge_list_div').html(html);
+      }
+  });
+}
+
 $("document").ready(function () {
     get_interviewee_comments();
+    get_interviewee_judge();
     setInterval(get_interviewee_comments, 1500);
 })
 
