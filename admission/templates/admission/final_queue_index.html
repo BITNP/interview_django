@@ -23,6 +23,9 @@
           <li class="nav-item active">
             <a class="nav-link" href="{% url 'admission:index' %}">录取系统 <span class="sr-only">(current)</span></a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin:index' %}">管理后台</a>
+          </li>
         </ul>
         <form class="form-inline my-2 my-lg-0" action="{% url 'oidc_logout' %}" method="post">
           {% csrf_token %}

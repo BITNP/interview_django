@@ -306,14 +306,17 @@ def interviewee_judge_api(request, interviewee_id):
     if interviewee.interview_status < Interviewee.INTERVIEW_READY:
         return Forbidden()
 
-    judgement = Judgement.objects.get(
+    judgement_list = Judgement.objects.filter(
         Q(interviewee=interviewee) & Q(interviewer=request.user)
-    )
-    resp = [
-        {"name": "表达", "content": judgement.representation},
-        {"name": "能力", "content": judgement.ability},
-        {"name": "对网协的认识", "content": judgement.cognition},
-    ]
+    ).all()
+    resp = []
+
+    if len(judgement_list) != 0:
+        resp = [
+            {"name": "表达", "content": judgement_list[0].representation},
+            {"name": "能力", "content": judgement_list[0].ability},
+            {"name": "对网协的认识", "content": judgement_list[0].cognition},
+        ]
     return JsonResponse(resp, safe=False)
 
 

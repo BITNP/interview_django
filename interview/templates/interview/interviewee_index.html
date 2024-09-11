@@ -22,6 +22,9 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'admission:index' %}">录取系统</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin:index' %}">管理后台</a>
+          </li>
         </ul>
         <form class="form-inline my-2 my-lg-0" action="{% url 'oidc_logout' %}" method="post">
           {% csrf_token %}
@@ -34,9 +37,9 @@
       <div class="jumbotron">
         <a href="{% url 'interview:index' %}">返回</a>
         <div id="search_div">
-          <div class="input-group mb-3">
+          <div class="input-group my-3">
             <div class="input-group-prepend">
-              <span class="input-group-text" id="basic-addon3">输入学号，回车搜索</span>
+              <span class="input-group-text" id="basic-addon3">输入学号后四位，回车搜索</span>
             </div>
             <input type="text" class="form-control" aria-describedby="basic-addon3" name="q" id="student_search" />
           </div>

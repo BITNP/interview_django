@@ -1,0 +1,16 @@
+version: "3"
+services:
+  interview_django:
+    build: .
+    restart: always
+    environment:
+      SECRET_KEY: ${SECRET_KEY} # you must change that before deploy
+      OIDC_RP_CLIENT_ID: ${OIDC_RP_CLIENT_ID}
+      OIDC_RP_CLIENT_SECRET: ${OIDC_RP_CLIENT_SECRET}
+    ports:
+      - 80:80
+    volumes:
+      - ./data:/usr/src/app/db
+      - ./interview:/usr/src/app/interview
+      - ./interview_django:/usr/src/app/interview_django
+      - ./admission:/usr/src/app/admission

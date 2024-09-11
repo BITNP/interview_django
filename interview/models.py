@@ -47,12 +47,10 @@ class Interviewer(models.Model):
     INTERVIEW_IDENTITY = (
         (WAITING_ROOM, "候场引导"),
         (INTERVIEW_ROOM, "面试官"),
-        (OBSERVER, "围观"),
+        (OBSERVER, "围观群众"),
     )
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    interview_identity = models.IntegerField(
-        choices=INTERVIEW_IDENTITY, default=OBSERVER
-    )
+    interview_identity = models.IntegerField(choices=INTERVIEW_IDENTITY)
     department = models.ForeignKey(
         Department, blank=True, null=True, on_delete=models.SET_NULL
     )

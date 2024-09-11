@@ -27,6 +27,9 @@
                     <a class="nav-link" href="{% url 'admission:index'%}">录取系统 <span
                         class="sr-only">(current)</span></a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin:index' %}">管理后台</a>
+                </li>
             </ul>
             <form class="form-inline my-2 my-lg-0" action="{% url 'oidc_logout' %}" method="post">
                 {% csrf_token %}
@@ -92,6 +95,25 @@
                     {% else %}
                     <ul class="list-group">
                         <li class="list-group-item">还没有评论。</li>
+                    </ul>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div id="judgement">
+                <div class="mb-5">
+                    {% if judgement_list %}
+                    <ul class="list-group">
+                        {% for judgement in judgement_list %}
+                        <p>{{ judgement.interviewer.first_name }}:</p>
+                        <li class="list-group-item">表达: {{ judgement.representation }}</li>
+                        <li class="list-group-item">能力: {{ judgement.ability }}</li>
+                        <li class="list-group-item">对网协的认识: {{ judgement.cognition }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <ul class="list-group">
+                        <li class="list-group-item">还没有评价。</li>
                     </ul>
                     {% endif %}
                 </div>

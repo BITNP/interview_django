@@ -31,6 +31,9 @@ def admission_start_adminview(request):
     )
     if request.method == "POST":
         interviewees.update(interview_status=Interviewee.FIRST_PREFERENCE_QUEUE)
+        gconf = Global.get()
+        gconf.status = Global.ADMISSION
+        gconf.save()
         return HttpResponse("done")
     interviewee_list = interviewees.all()
     return render(
@@ -87,10 +90,12 @@ def interviewee_detail(request, department_id, interviewee_id):
     ):
         return Forbidden()
     comment_list = Comment.objects.filter(interviewee=interviewee)
+    judgement_list = Judgement.objects.filter(interviewee=interviewee)
     context = {
         "department_id": department_id,
         "interviewee": interviewee,
         "comment_list": comment_list,
+        "judgement_list": judgement_list,
     }
     return render(request, "admission/interviewee_detail.html", context=context)
 

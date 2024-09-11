@@ -7,6 +7,7 @@ from . import models
 admin.site.register(models.Room)
 admin.site.register(models.Department)
 admin.site.register(models.Comment)
+admin.site.register(models.Judgement)
 admin.site.unregister(User)
 
 
