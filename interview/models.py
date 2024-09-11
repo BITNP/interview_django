@@ -1,7 +1,29 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.forms import ModelForm, Form
-# Create your models here.
+
+
+class Global(models.Model):
+    INTERVIEW = 1
+    ADMISSION = 2
+
+    STATUS = (
+        (INTERVIEW, "正在进行面试"),
+        (ADMISSION, "正在进行录取"),
+    )
+
+    name = models.CharField(max_length=20, default="global_config")
+    status = models.IntegerField(choices=STATUS, default=INTERVIEW)
+
+    @classmethod
+    def get(cls):
+        if Global.objects.count() == 0:
+            return None
+        else:
+            return Global.objects.get(pk=1)
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class Department(models.Model):
@@ -23,16 +45,18 @@ class Interviewer(models.Model):
     INTERVIEW_ROOM = 2
     OBSERVER = 3
     INTERVIEW_IDENTITY = (
-        (WAITING_ROOM, "候场教室"),
-        (INTERVIEW_ROOM, "面试教室"),
-        (OBSERVER, "围观")
+        (WAITING_ROOM, "候场引导"),
+        (INTERVIEW_ROOM, "面试官"),
+        (OBSERVER, "围观"),
     )
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    interview_identity = models.IntegerField(choices=INTERVIEW_IDENTITY)
+    interview_identity = models.IntegerField(
+        choices=INTERVIEW_IDENTITY, default=OBSERVER
+    )
     department = models.ForeignKey(
-        Department, blank=True, null=True, on_delete=models.SET_NULL)
-    room = models.ForeignKey(
-        Room, blank=True, null=True, on_delete=models.SET_NULL)
+        Department, blank=True, null=True, on_delete=models.SET_NULL
+    )
+    room = models.ForeignKey(Room, blank=True, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.user.first_name
@@ -57,7 +81,7 @@ class Interviewee(models.Model):
         (FIRST_PREFERENCE_QUEUE, "第一志愿队列"),
         (SECOND_PREFERENCE_QUEUE, "第二志愿队列"),
         (FINAL_QUEUE, "最终队列"),
-        (ADMITTED, "已录取")
+        (ADMITTED, "已录取"),
     )
     name = models.CharField(max_length=30)
     sex = models.CharField(max_length=10)
@@ -68,17 +92,50 @@ class Interviewee(models.Model):
     interview_status = models.IntegerField(choices=INTERVIEWEE_STATUS)
     accept_adjust = models.BooleanField()
     first_preference = models.ForeignKey(
-        Department, blank=True, null=True, related_name="first_preference", on_delete=models.SET_NULL)
+        Department,
+        blank=True,
+        null=True,
+        related_name="first_preference",
+        on_delete=models.SET_NULL,
+    )
     second_preference = models.ForeignKey(
-        Department, blank=True, null=True, related_name="second_preference", on_delete=models.SET_NULL)
+        Department,
+        blank=True,
+        null=True,
+        related_name="second_preference",
+        on_delete=models.SET_NULL,
+    )
     admitted_department = models.ForeignKey(
-        Department, blank=True, null=True, related_name="admitted_department", on_delete=models.SET_NULL)
+        Department,
+        blank=True,
+        null=True,
+        related_name="admitted_department",
+        on_delete=models.SET_NULL,
+    )
     assigned_room = models.ForeignKey(
-        Room, blank=True, null=True, on_delete=models.SET_NULL)
+        Room, blank=True, null=True, on_delete=models.SET_NULL
+    )
     assigned_datetime = models.DateTimeField()
 
     def __str__(self):
         return self.name
+
+
+class Judgement(models.Model):
+    representation = models.TextField()
+    ability = models.TextField()
+    cognition = models.TextField()
+
+    interviewer = models.ForeignKey(User, on_delete=models.CASCADE)
+    interviewee = models.ForeignKey(Interviewee, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "%s-%s" % (self.interviewee, self.interviewer.first_name)
+
+class JudgementForm(ModelForm):
+    class Meta:
+        model = Judgement
+        fields = ["representation", "ability", "cognition"]
 
 
 class Comment(models.Model):
@@ -87,10 +144,10 @@ class Comment(models.Model):
     interviewee = models.ForeignKey(Interviewee, on_delete=models.CASCADE)
 
     def __str__(self):
-        return '%s-%s' % (self.interviewee, self.interviewer.first_name)
+        return "%s-%s" % (self.interviewee, self.interviewer.first_name)
 
 
 class PartialCommentForm(ModelForm):
     class Meta:
         model = Comment
-        fields = ['content']
+        fields = ["content"]
