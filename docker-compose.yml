@@ -1,7 +1,6 @@
 version: "3"
 services:
   interview_django:
-    # image: everything411/interview-bitnp
     build: .
     restart: always
     environment:

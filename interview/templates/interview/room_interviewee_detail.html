@@ -37,29 +37,30 @@
       <div class="jumbotron">
         <a href="{% url 'interview:room_index' room_id %}">返回</a>
         <div id="student">
-          <table class="table table-hover table-responsive m-auto">
+          <table class="table table-hover table-responsive m-auto text-center">
             <thead>
               <tr>
-                <th>姓名</th>
-                <th>性别</th>
-                <th>学号</th>
-                <th>专业</th>
-                <th>接受调剂</th>
-                <th>一志愿</th>
-                <th>二志愿</th>
-                <th>操作</th>
+                <th scope="col">姓名</th>
+                <th scope="col">性别</th>
+                <th scope="col">学号</th>
+                <th scope="col">专业</th>
+                <th scope="col">接受调剂</th>
+                <th scope="col">一志愿</th>
+                <th scope="col">二志愿</th>
+                <th scope="col">操作</th>
+                <th scope="col">面试计时</th>
               </tr>
             </thead>
             <tbody>
-              <tr class="warning">
-                <td>{{ interviewee.name }}</td>
-                <td>{{ interviewee.sex }}</td>
-                <td>{{ interviewee.student_id }}</td>
-                <td>{{ interviewee.majar_text }}</td>
-                <td>{{ interviewee.accept_adjust }}</td>
-                <td>{{ interviewee.first_preference }}</td>
-                <td>{{ interviewee.second_preference }}</td>
-                <td>
+              <tr class="table-warning">
+                <td class="align-middle">{{ interviewee.name }}</td>
+                <td class="align-middle">{{ interviewee.sex }}</td>
+                <td class="align-middle">{{ interviewee.student_id }}</td>
+                <td class="align-middle">{{ interviewee.majar_text }}</td>
+                <td class="align-middle">{{ interviewee.accept_adjust }}</td>
+                <td class="align-middle">{{ interviewee.first_preference }}</td>
+                <td class="align-middle">{{ interviewee.second_preference }}</td>
+                <td class="align-middle">
                   {% if not readonly %}
                     {% if interviewee.interview_status == 3 %}
                       <a href="{% url 'interview:room_interviewee_start' room_id interviewee.id %}"><button type="button" class="btn btn-success btn-block">开始面试</button></a>
@@ -69,6 +70,9 @@
                       <button type="button" class="btn btn-secondary btn-block disable">面试已结束</button>
                     {% endif %}
                   {% endif %}
+                </td>
+                <td class="align-middle">
+                  <span id="interview_time">--:--</span>
                 </td>
               </tr>
             </tbody>
@@ -126,7 +130,7 @@
     </main>
   </body>
 
-  <script>
+<script>
 var charMap = {
   '&': '&amp;',
   '<': '&lt;',
@@ -196,10 +200,36 @@ function get_interviewee_judge() {
   });
 }
 
+function set_formatted_time(start, end){
+  var difftime = (end-start)/1000;
+  var minutes = parseInt(difftime%3600/60);
+  var seconds = parseInt(difftime%60);
+  console.log(minutes, seconds);
+  $('#interview_time').html(minutes+":"+seconds);
+}
+
+function get_interview_time() {
+  const start = new Date("{{ interviewee.start_datetime.isoformat }}");
+  const now = new Date();
+  set_formatted_time(start, now);
+}
+
 $("document").ready(function () {
     get_interviewee_comments();
     get_interviewee_judge();
     setInterval(get_interviewee_comments, 1500);
+
+    {% if interviewee.start_datetime is none %}
+      $('#interview_time').html("--:--");
+    {% else %}
+      {% if interviewee.interview_status == 4 %}
+        setInterval(get_interview_time, 1000);
+      {% else %}
+        const start = new Date("{{ interviewee.start_datetime.isoformat }}");
+        const end  = new Date("{{ interviewee.end_datetime.isoformat }}");
+        set_formatted_time(start, end);
+      {% endif %}
+    {% endif %}
 })
 
 $("#id_content").keydown(function(event){

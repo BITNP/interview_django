@@ -114,6 +114,8 @@ class Interviewee(models.Model):
         Room, blank=True, null=True, on_delete=models.SET_NULL
     )
     assigned_datetime = models.DateTimeField()
+    start_datetime = models.DateTimeField(blank=True,null=True)
+    end_datetime = models.DateTimeField(blank=True,null=True)
 
     def __str__(self):
         return self.name

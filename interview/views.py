@@ -191,6 +191,7 @@ def room_interviewee_start(request, room_id, interviewee_id):
 
     if interviewee.interview_status == Interviewee.INTERVIEW_READY:
         interviewee.interview_status = Interviewee.INTERVIEW_STARTED
+        interviewee.start_datetime = timezone.now()
         interviewee.save()
 
     return HttpResponseRedirect(
@@ -217,6 +218,7 @@ def room_interviewee_end(request, room_id, interviewee_id):
 
     if interviewee.interview_status == Interviewee.INTERVIEW_STARTED:
         interviewee.interview_status = Interviewee.INTERVIEW_END
+        interviewee.end_datetime = timezone.now()
         interviewee.save()
 
     return HttpResponseRedirect(reverse("interview:room_index", args=(room_id,)))
