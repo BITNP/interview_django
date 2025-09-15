@@ -24,7 +24,7 @@
         "model": "interview.Department",
         "pk": 3,
         "fields": {
-            "name": "综合运营部"
+            "name": "数字媒体中心"
         }
     },
     {
