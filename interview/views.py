@@ -128,14 +128,26 @@ def room_interviewee_detail(request, room_id, interviewee_id):
     if interviewee.assigned_room_id != room.id:
         return Forbidden()
 
+    # 检查当前用户是否已经提交过评价
+    existing_judgement = Judgement.objects.filter(
+        interviewee=interviewee, 
+        interviewer=request.user
+    ).first()
+    
     comment_form = PartialCommentForm()
-    judgement_form = JudgementForm()
+    # 如果已有评价，用现有数据初始化表单
+    if existing_judgement:
+        judgement_form = JudgementForm(instance=existing_judgement)
+    else:
+        judgement_form = JudgementForm()
+        
     context = {
         "room_id": room_id,
         "interviewee": interviewee,
         "judge_form": judgement_form,
         "comment_form": comment_form,
         "readonly": readonly,
+        "existing_judgement": existing_judgement,
     }
     return render(request, "interview/room_interviewee_detail.html", context=context)
 
@@ -300,13 +312,26 @@ def room_interviewee_judge(request, room_id, interviewee_id):
         if interviewee.interview_status < Interviewee.INTERVIEW_READY:
             return Forbidden()
 
-        form = JudgementForm(request.POST)
-        if form.is_valid():
-            judgement = form.save(commit=False)
-            judgement.interviewer = request.user
-            judgement.interviewee = interviewee
-            Judgement.objects.all().delete()
-            judgement.save()
+        # 检查是否已存在该用户对该面试者的评价
+        existing_judgement = Judgement.objects.filter(
+            interviewer=request.user,
+            interviewee=interviewee
+        ).first()
+
+        if existing_judgement:
+            # 更新现有评价
+            form = JudgementForm(request.POST, instance=existing_judgement)
+            if form.is_valid():
+                form.save()
+        else:
+            # 创建新评价
+            form = JudgementForm(request.POST)
+            if form.is_valid():
+                judgement = form.save(commit=False)
+                judgement.interviewer = request.user
+                judgement.interviewee = interviewee
+                judgement.save()
+                
     return HttpResponseRedirect(
         reverse("interview:room_interviewee_detail", args=(room_id, interviewee_id))
     )
@@ -318,16 +343,37 @@ def interviewee_judge_api(request, interviewee_id):
     if interviewee.interview_status < Interviewee.INTERVIEW_READY:
         return Forbidden()
 
-    judgement_list = Judgement.objects.filter(
-        Q(interviewee=interviewee) & Q(interviewer=request.user)
-    ).all()
+    # 获取该面试者的所有评价（所有面试官的评价）
+    judgement_list = Judgement.objects.filter(interviewee=interviewee).all()
     resp = []
 
     if len(judgement_list) != 0:
+        # 计算平均分
+        total_representation = sum(j.representation for j in judgement_list)
+        total_ability = sum(j.ability for j in judgement_list)
+        total_cognition = sum(j.cognition for j in judgement_list)
+        count = len(judgement_list)
+        
+        avg_representation = round(total_representation / count, 1)
+        avg_ability = round(total_ability / count, 1)
+        avg_cognition = round(total_cognition / count, 1)
+        
+        # 将平均分转换为星星显示
+        def stars_display(rating):
+            full_stars = int(rating)
+            half_star = 1 if (rating - full_stars) >= 0.5 else 0
+            empty_stars = 5 - full_stars - half_star
+            
+            result = "★" * full_stars
+            if half_star:
+                result += "☆"  # 可以考虑用其他符号表示半星，如 ⭐
+            result += "☆" * empty_stars
+            return result
+        
         resp = [
-            {"name": "表达", "content": judgement_list[0].representation},
-            {"name": "能力", "content": judgement_list[0].ability},
-            {"name": "对网协的认识", "content": judgement_list[0].cognition},
+            {"name": "表达能力", "content": f"{stars_display(avg_representation)} ({avg_representation}/5) - {count}人评价"},
+            {"name": "专业能力", "content": f"{stars_display(avg_ability)} ({avg_ability}/5) - {count}人评价"},
+            {"name": "对网协的认识", "content": f"{stars_display(avg_cognition)} ({avg_cognition}/5) - {count}人评价"},
         ]
     return JsonResponse(resp, safe=False)
 

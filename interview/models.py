@@ -122,9 +122,22 @@ class Interviewee(models.Model):
 
 
 class Judgement(models.Model):
-    representation = models.TextField()
-    ability = models.TextField()
-    cognition = models.TextField()
+    # 使用IntegerField存储1-5星评分
+    representation = models.IntegerField(
+        choices=[(i, f'{i}星') for i in range(1, 6)], 
+        verbose_name="表达能力",
+        help_text="1-5星评分"
+    )
+    ability = models.IntegerField(
+        choices=[(i, f'{i}星') for i in range(1, 6)], 
+        verbose_name="专业能力",
+        help_text="1-5星评分"
+    )
+    cognition = models.IntegerField(
+        choices=[(i, f'{i}星') for i in range(1, 6)], 
+        verbose_name="对网协的认识",
+        help_text="1-5星评分"
+    )
 
     interviewer = models.ForeignKey(User, on_delete=models.CASCADE)
     interviewee = models.ForeignKey(Interviewee, on_delete=models.CASCADE)
