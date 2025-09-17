@@ -25,7 +25,17 @@ def index(request):
     if gconf is None:
         return Forbidden("请联系超管先加载全局状态数据！")
     room_list = Room.objects.all()
-    context = {"room_list": room_list}
+    
+    # 传递当前用户身份信息供模板使用
+    current_identity = None
+    if request.user.is_authenticated and hasattr(request.user, 'interviewer'):
+        current_identity = request.user.interviewer.interview_identity
+    
+    context = {
+        "room_list": room_list,
+        "current_identity": current_identity,
+        "OBSERVER": Interviewer.OBSERVER,
+    }
     return render(request, "interview/index.html", context=context)
 
 
@@ -371,6 +381,32 @@ def interviewer_change_room(request, room_id):
         Forbidden()
 
     request.user.interviewer.room = Room.objects.get(pk=room_id)
+    request.user.interviewer.save()
+
+    return HttpResponseRedirect(reverse("interview:index"))
+
+
+@login_required()
+def interviewer_change_identity(request, identity_id):
+    """
+    切换面试官身份
+    """
+    current_identity = request.user.interviewer.interview_identity
+    
+    # 围观群众不允许切换身份
+    if current_identity == Interviewer.OBSERVER:
+        return Forbidden("围观群众不允许切换身份")
+    
+    # 不允许切换到围观群众身份
+    if identity_id == Interviewer.OBSERVER:
+        return Forbidden("不允许切换到围观群众身份")
+    
+    # 验证身份ID是否有效
+    valid_identities = [choice[0] for choice in Interviewer.INTERVIEW_IDENTITY]
+    if identity_id not in valid_identities:
+        return Forbidden("无效的身份ID")
+
+    request.user.interviewer.interview_identity = identity_id
     request.user.interviewer.save()
 
     return HttpResponseRedirect(reverse("interview:index"))

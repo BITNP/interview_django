@@ -36,6 +36,18 @@
               {% endfor %}
             </div>
           </div>
+
+          {% comment %} 只有非围观群众才能看到身份切换按钮 {% endcomment %}
+          {% if current_identity != OBSERVER %}
+          <div class="dropdown mr-2">
+            <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">切换身份</button>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="{% url 'interview:interviewer_change_identity' 1 %}">候场引导</a>
+              <a class="dropdown-item" href="{% url 'interview:interviewer_change_identity' 2 %}">面试官</a>
+              {% comment %} 不提供切换到围观群众的选项 {% endcomment %}
+            </div>
+          </div>
+          {% endif %}
           <form class="form-inline my-2 my-lg-0" action="{% url 'oidc_logout' %}" method="post">
             {% csrf_token %}
             <button class="btn btn-success my-2 my-sm-0" type="submit">注销</button>

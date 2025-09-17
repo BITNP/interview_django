@@ -8,6 +8,7 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("public", views.public_index, name="public_index"),
     path("interviewer/<int:room_id>", views.interviewer_change_room, name="interviewer_change_room"),
+    path("interviewer/identity/<int:identity_id>", views.interviewer_change_identity, name="interviewer_change_identity"),
     path("interviewees", views.interviewee_index, name="interviewee_index"),
     path(
         "interviewees/<int:interviewee_id>/checkin",
