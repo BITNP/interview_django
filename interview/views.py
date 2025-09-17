@@ -437,22 +437,21 @@ def interviewer_change_identity(request, identity_id):
     """
     切换面试官身份
     """
-    current_identity = request.user.interviewer.interview_identity
-    
-    # 围观群众不允许切换身份
-    if current_identity == Interviewer.OBSERVER:
-        return Forbidden("围观群众不允许切换身份")
-    
-    # 不允许切换到围观群众身份
-    if identity_id == Interviewer.OBSERVER:
-        return Forbidden("不允许切换到围观群众身份")
-    
     # 验证身份ID是否有效
     valid_identities = [choice[0] for choice in Interviewer.INTERVIEW_IDENTITY]
     if identity_id not in valid_identities:
         return Forbidden("无效的身份ID")
-
-    request.user.interviewer.interview_identity = identity_id
-    request.user.interviewer.save()
+    
+    # 如果用户没有面试身份，创建一个
+    if not hasattr(request.user, 'interviewer') or not request.user.interviewer:
+        Interviewer.objects.create(
+            user=request.user,
+            interview_identity=identity_id,
+            department=Department.objects.first()  # 设置一个默认部门
+        )
+    else:
+        # 更新现有身份
+        request.user.interviewer.interview_identity = identity_id
+        request.user.interviewer.save()
 
     return HttpResponseRedirect(reverse("interview:index"))
