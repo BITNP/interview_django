@@ -505,7 +505,7 @@
       $(this).val(newDope);
     } else if (keyCode == 13) {
       event.preventDefault();
-      $("#comment_form").submit();
+      $("#comment_form").trigger('submit'); // 这会触发Ajax提交而不是页面刷新
     }
   });
 
@@ -580,15 +580,15 @@
       });
     });
 
-    // 表单验证和提交优化
+    // 评价表单Ajax提交
     $('#judge_form').on('submit', function (e) {
+      e.preventDefault(); // 阻止默认表单提交
+
       const representation = $('input[name="representation"]').val();
       const ability = $('input[name="ability"]').val();
       const cognition = $('input[name="cognition"]').val();
 
       if (!representation || !ability || !cognition) {
-        e.preventDefault();
-
         // 创建Bootstrap警告提示
         const alertHtml = '<div class="alert alert-warning alert-dismissible fade show" role="alert">' +
           '⚠️ <strong>请完成所有评分！</strong> 需要为表达能力、专业能力和对网协的认识都进行评分。' +
@@ -600,13 +600,50 @@
         // 移除旧的警告并添加新的
         $('.alert-warning').remove();
         $(this).prepend(alertHtml);
-
         return false;
       }
 
-      // 提交时显示loading状态
-      const submitBtn = $(this).find('button[type="submit"]');
+      const form = $(this);
+      const submitBtn = form.find('button[type="submit"]');
+      const originalText = submitBtn.html();
+
+      // 显示提交状态
       submitBtn.html('⏳ 提交中...').prop('disabled', true);
+
+      $.ajax({
+        url: form.attr('action'),
+        type: 'POST',
+        data: form.serialize(),
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function (response) {
+          // 立即刷新评价列表
+          get_interviewee_judge();
+          // 移除警告提示
+          $('.alert-warning').remove();
+          // 恢复按钮状态
+          submitBtn.html(originalText).prop('disabled', false);
+          // 显示成功提示
+          const successHtml = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+            '✅ <strong>评价提交成功！</strong>' +
+            '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+            '<span aria-hidden="true">&times;</span>' +
+            '</button>' +
+            '</div>';
+          form.prepend(successHtml);
+          // 3秒后自动隐藏成功提示
+          setTimeout(function () {
+            $('.alert-success').fadeOut();
+          }, 3000);
+        },
+        error: function (xhr, status, error) {
+          console.error('评价提交失败:', error);
+          alert('评价提交失败，请重试');
+          // 恢复按钮状态
+          submitBtn.html(originalText).prop('disabled', false);
+        }
+      });
     });
 
     // 当用户点击星星时，移除警告高亮
@@ -614,18 +651,45 @@
       $('.alert-warning').fadeOut();
     });
 
-    // 评论表单提交优化
+    // 评论表单Ajax提交
     $('#comment_form').on('submit', function (e) {
+      e.preventDefault(); // 阻止默认表单提交
+
       const content = $('#id_content').val().trim();
       if (!content) {
-        e.preventDefault();
         $('#id_content').addClass('is-invalid');
         return false;
       }
 
+      const form = $(this);
+      const submitBtn = form.find('button[type="submit"]');
+      const originalText = submitBtn.html();
+
       // 显示提交状态
-      const submitBtn = $(this).find('button[type="submit"]');
       submitBtn.html('⏳ 发布中...').prop('disabled', true);
+
+      $.ajax({
+        url: form.attr('action'),
+        type: 'POST',
+        data: form.serialize(),
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function (response) {
+          // 清空评论输入框
+          $('#id_content').val('').removeClass('is-invalid');
+          // 立即刷新评论列表
+          get_interviewee_comments();
+          // 恢复按钮状态
+          submitBtn.html(originalText).prop('disabled', false);
+        },
+        error: function (xhr, status, error) {
+          console.error('评论提交失败:', error);
+          alert('评论提交失败，请重试');
+          // 恢复按钮状态
+          submitBtn.html(originalText).prop('disabled', false);
+        }
+      });
     });
 
     // 输入时移除错误状态

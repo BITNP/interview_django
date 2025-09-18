@@ -276,6 +276,15 @@ def room_interviewee_comment(request, room_id, interviewee_id):
             comment.interviewer = request.user
             comment.interviewee = interviewee
             comment.save()
+
+            # 如果是Ajax请求，返回JSON响应
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'success', 'message': '评论添加成功'})
+        else:
+            # 如果是Ajax请求且表单无效，返回错误信息
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': '评论内容无效'}, status=400)
+
     return HttpResponseRedirect(
         reverse("interview:room_interviewee_detail",
                 args=(room_id, interviewee_id))
@@ -329,6 +338,13 @@ def room_interviewee_judge(request, room_id, interviewee_id):
             form = JudgementForm(request.POST, instance=existing_judgement)
             if form.is_valid():
                 form.save()
+                # 如果是Ajax请求，返回JSON响应
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'status': 'success', 'message': '评价更新成功'})
+            else:
+                # 如果是Ajax请求且表单无效，返回错误信息
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'status': 'error', 'message': '评价数据无效'}, status=400)
         else:
             # 创建新评价
             form = JudgementForm(request.POST)
@@ -337,6 +353,13 @@ def room_interviewee_judge(request, room_id, interviewee_id):
                 judgement.interviewer = request.user
                 judgement.interviewee = interviewee
                 judgement.save()
+                # 如果是Ajax请求，返回JSON响应
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'status': 'success', 'message': '评价提交成功'})
+            else:
+                # 如果是Ajax请求且表单无效，返回错误信息
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'status': 'error', 'message': '评价数据无效'}, status=400)
 
     return HttpResponseRedirect(
         reverse("interview:room_interviewee_detail",
