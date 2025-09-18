@@ -414,7 +414,7 @@ def interviewee_judge_api(request, interviewee_id):
 @login_required()
 def interviewee_list_api(request):
     """
-    获取面试者的api
+    获取面试者的api，支持分页和搜索
     """
     user_identity = request.user.interviewer.interview_identity
     if user_identity == Interviewer.WAITING_ROOM:
@@ -422,13 +422,34 @@ def interviewee_list_api(request):
     else:
         readonly = True
 
-    interviewee_list = (
-        Interviewee.objects.filter(
-            interview_status__lt=Interviewee.INTERVIEW_END)
-        .order_by("-interview_status", "assigned_datetime")
-        .all()
-    )
-    resp = []
+    # 获取分页参数
+    page = int(request.GET.get('page', 1))
+    page_size = int(request.GET.get('page_size', 10))
+
+    # 获取搜索参数
+    search_query = request.GET.get('search', '').strip()
+
+    # 计算偏移量
+    offset = (page - 1) * page_size
+
+    # 构建查询集
+    queryset = Interviewee.objects.filter(
+        interview_status__lt=Interviewee.INTERVIEW_END)
+
+    # 如果有搜索条件，添加搜索过滤（只搜索学号末四位）
+    if search_query:
+        # 确保搜索条件是数字且长度合理
+        if search_query.isdigit() and len(search_query) >= 3:
+            queryset = queryset.filter(student_id__endswith=search_query)
+
+    # 获取总数
+    total_count = queryset.count()
+
+    # 获取分页数据
+    interviewee_list = queryset.order_by(
+        "-interview_status", "assigned_datetime")[offset:offset + page_size]
+
+    data = []
     for interviewee in interviewee_list:
         fpn = interviewee.first_preference.name if interviewee.first_preference else ""
         spn = (
@@ -451,7 +472,25 @@ def interviewee_list_api(request):
             "second_preference": spn,
             "assigned_room": rn,
         }
-        resp.append(interviewee_dict)
+        data.append(interviewee_dict)
+
+    # 计算总页数
+    total_pages = (total_count + page_size - 1) // page_size
+
+    # 返回分页信息
+    resp = {
+        "data": data,
+        "pagination": {
+            "current_page": page,
+            "page_size": page_size,
+            "total_count": total_count,
+            "total_pages": total_pages,
+            "has_next": page < total_pages,
+            "has_previous": page > 1
+        },
+        "search": search_query
+    }
+
     return JsonResponse(resp, safe=False)
 
 
