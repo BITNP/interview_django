@@ -7,8 +7,11 @@ app_name = "interview"
 urlpatterns = [
     path("", views.index, name="index"),
     path("public", views.public_index, name="public_index"),
-    path("interviewer/<int:room_id>", views.interviewer_change_room, name="interviewer_change_room"),
-    path("interviewer/identity/<int:identity_id>", views.interviewer_change_identity, name="interviewer_change_identity"),
+    path("interviewer/<int:room_id>", views.interviewer_change_room,
+         name="interviewer_change_room"),
+    path("interviewer/identity/<int:identity_id>",
+         views.interviewer_change_identity, name="interviewer_change_identity"),
+    path("interviewer/setup", views.setup_interviewer, name="setup_interviewer"),
     path("interviewees", views.interviewee_index, name="interviewee_index"),
     path(
         "interviewees/<int:interviewee_id>/checkin",
@@ -20,7 +23,8 @@ urlpatterns = [
         views.interviewee_assign,
         name="interviewee_assign",
     ),
-    path("rooms/<int:room_id>/interviewees", views.room_index, name="room_index"),
+    path("rooms/<int:room_id>/interviewees",
+         views.room_index, name="room_index"),
     path(
         "rooms/<int:room_id>/interviewees/<int:interviewee_id>",
         views.room_interviewee_detail,

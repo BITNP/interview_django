@@ -25,14 +25,16 @@ def index(request):
     if gconf is None:
         return Forbidden("请联系超管先加载全局状态数据！")
     room_list = Room.objects.all()
-    
+    department_list = Department.objects.all()
+
     # 传递当前用户身份信息供模板使用
     current_identity = None
     if request.user.is_authenticated and hasattr(request.user, 'interviewer'):
         current_identity = request.user.interviewer.interview_identity
-    
+
     context = {
         "room_list": room_list,
+        "department_list": department_list,
         "current_identity": current_identity,
         "OBSERVER": Interviewer.OBSERVER,
     }
@@ -44,7 +46,8 @@ def public_index(request):
     候场教室显示的面试当前状态视图，公开
     """
     interviewee_list = (
-        Interviewee.objects.filter(interview_status__lt=Interviewee.INTERVIEW_END)
+        Interviewee.objects.filter(
+            interview_status__lt=Interviewee.INTERVIEW_END)
         .order_by("-interview_status", "assigned_datetime")
         .all()
     )
@@ -130,17 +133,17 @@ def room_interviewee_detail(request, room_id, interviewee_id):
 
     # 检查当前用户是否已经提交过评价
     existing_judgement = Judgement.objects.filter(
-        interviewee=interviewee, 
+        interviewee=interviewee,
         interviewer=request.user
     ).first()
-    
+
     comment_form = PartialCommentForm()
     # 如果已有评价，用现有数据初始化表单
     if existing_judgement:
         judgement_form = JudgementForm(instance=existing_judgement)
     else:
         judgement_form = JudgementForm()
-        
+
     context = {
         "room_id": room_id,
         "interviewee": interviewee,
@@ -188,7 +191,8 @@ def interviewee_assign(request, room_id, interviewee_id):
             )
 
     return HttpResponseRedirect(
-        reverse("interview:room_interviewee_detail", args=(room_id, interviewee_id))
+        reverse("interview:room_interviewee_detail",
+                args=(room_id, interviewee_id))
     )
 
 
@@ -217,7 +221,8 @@ def room_interviewee_start(request, room_id, interviewee_id):
         interviewee.save()
 
     return HttpResponseRedirect(
-        reverse("interview:room_interviewee_detail", args=(room_id, interviewee_id))
+        reverse("interview:room_interviewee_detail",
+                args=(room_id, interviewee_id))
     )
 
 
@@ -272,7 +277,8 @@ def room_interviewee_comment(request, room_id, interviewee_id):
             comment.interviewee = interviewee
             comment.save()
     return HttpResponseRedirect(
-        reverse("interview:room_interviewee_detail", args=(room_id, interviewee_id))
+        reverse("interview:room_interviewee_detail",
+                args=(room_id, interviewee_id))
     )
 
 
@@ -331,9 +337,10 @@ def room_interviewee_judge(request, room_id, interviewee_id):
                 judgement.interviewer = request.user
                 judgement.interviewee = interviewee
                 judgement.save()
-                
+
     return HttpResponseRedirect(
-        reverse("interview:room_interviewee_detail", args=(room_id, interviewee_id))
+        reverse("interview:room_interviewee_detail",
+                args=(room_id, interviewee_id))
     )
 
 
@@ -353,27 +360,30 @@ def interviewee_judge_api(request, interviewee_id):
         total_ability = sum(j.ability for j in judgement_list)
         total_cognition = sum(j.cognition for j in judgement_list)
         count = len(judgement_list)
-        
+
         avg_representation = round(total_representation / count, 1)
         avg_ability = round(total_ability / count, 1)
         avg_cognition = round(total_cognition / count, 1)
-        
+
         # 将平均分转换为星星显示
         def stars_display(rating):
             full_stars = int(rating)
             half_star = 1 if (rating - full_stars) >= 0.5 else 0
             empty_stars = 5 - full_stars - half_star
-            
+
             result = "★" * full_stars
             if half_star:
                 result += "☆"  # 可以考虑用其他符号表示半星，如 ⭐
             result += "☆" * empty_stars
             return result
-        
+
         resp = [
-            {"name": "表达能力", "content": f"{stars_display(avg_representation)} ({avg_representation}/5) - {count}人评价"},
-            {"name": "专业能力", "content": f"{stars_display(avg_ability)} ({avg_ability}/5) - {count}人评价"},
-            {"name": "对网协的认识", "content": f"{stars_display(avg_cognition)} ({avg_cognition}/5) - {count}人评价"},
+            {"name": "表达能力",
+                "content": f"{stars_display(avg_representation)} ({avg_representation}/5) - {count}人评价"},
+            {"name": "专业能力",
+                "content": f"{stars_display(avg_ability)} ({avg_ability}/5) - {count}人评价"},
+            {"name": "对网协的认识",
+                "content": f"{stars_display(avg_cognition)} ({avg_cognition}/5) - {count}人评价"},
         ]
     return JsonResponse(resp, safe=False)
 
@@ -390,7 +400,8 @@ def interviewee_list_api(request):
         readonly = True
 
     interviewee_list = (
-        Interviewee.objects.filter(interview_status__lt=Interviewee.INTERVIEW_END)
+        Interviewee.objects.filter(
+            interview_status__lt=Interviewee.INTERVIEW_END)
         .order_by("-interview_status", "assigned_datetime")
         .all()
     )
@@ -441,7 +452,7 @@ def interviewer_change_identity(request, identity_id):
     valid_identities = [choice[0] for choice in Interviewer.INTERVIEW_IDENTITY]
     if identity_id not in valid_identities:
         return Forbidden("无效的身份ID")
-    
+
     # 如果用户没有面试身份，创建一个
     if not hasattr(request.user, 'interviewer') or not request.user.interviewer:
         Interviewer.objects.create(
@@ -454,4 +465,48 @@ def interviewer_change_identity(request, identity_id):
         request.user.interviewer.interview_identity = identity_id
         request.user.interviewer.save()
 
+    return HttpResponseRedirect(reverse("interview:index"))
+
+
+@login_required()
+def setup_interviewer(request):
+    """
+    设置面试官身份和部门的视图
+    """
+    if request.method == 'POST':
+        interview_identity = request.POST.get('interview_identity')
+        department_id = request.POST.get('department')
+
+        # 验证身份ID是否有效
+        valid_identities = [choice[0]
+                            for choice in Interviewer.INTERVIEW_IDENTITY]
+        try:
+            identity_id = int(interview_identity)
+            if identity_id not in valid_identities:
+                return Forbidden("无效的身份ID")
+        except (ValueError, TypeError):
+            return Forbidden("无效的身份ID")
+
+        # 验证部门ID是否有效
+        try:
+            department = Department.objects.get(id=department_id)
+        except Department.DoesNotExist:
+            return Forbidden("无效的部门ID")
+
+        # 如果用户没有面试身份，创建一个
+        if not hasattr(request.user, 'interviewer') or not request.user.interviewer:
+            Interviewer.objects.create(
+                user=request.user,
+                interview_identity=identity_id,
+                department=department
+            )
+        else:
+            # 更新现有身份和部门
+            request.user.interviewer.interview_identity = identity_id
+            request.user.interviewer.department = department
+            request.user.interviewer.save()
+
+        return HttpResponseRedirect(reverse("interview:index"))
+
+    # GET请求重定向到首页
     return HttpResponseRedirect(reverse("interview:index"))
