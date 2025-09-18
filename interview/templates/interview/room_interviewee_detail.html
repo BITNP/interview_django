@@ -49,6 +49,7 @@
               <th scope="col">姓名</th>
               <th scope="col">性别</th>
               <th scope="col">学号</th>
+              <th scope="col">邮箱</th>
               <th scope="col">专业</th>
               <th scope="col">接受调剂</th>
               <th scope="col">一志愿</th>
@@ -62,6 +63,7 @@
               <td class="align-middle">{{ interviewee.name }}</td>
               <td class="align-middle">{{ interviewee.sex }}</td>
               <td class="align-middle">{{ interviewee.student_id }}</td>
+              <td class="align-middle">{{ interviewee.email|default:"未提供" }}</td>
               <td class="align-middle">{{ interviewee.majar_text }}</td>
               <td class="align-middle">{{ interviewee.accept_adjust }}</td>
               <td class="align-middle">{{ interviewee.first_preference }}</td>

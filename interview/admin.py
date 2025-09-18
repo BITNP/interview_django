@@ -24,7 +24,7 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(models.Interviewee)
 class IntervieweeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'majar_text', 'interview_status',
+    list_display = ('id', 'name', 'email', 'majar_text', 'interview_status',
                     'first_preference', 'second_preference', 'admitted_department')
     list_filter = (
         "interview_status",
@@ -32,3 +32,4 @@ class IntervieweeAdmin(admin.ModelAdmin):
         "second_preference",
         "admitted_department",
     )
+    search_fields = ('name', 'student_id', 'email')

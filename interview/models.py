@@ -54,7 +54,8 @@ class Interviewer(models.Model):
     department = models.ForeignKey(
         Department, blank=True, null=True, on_delete=models.SET_NULL
     )
-    room = models.ForeignKey(Room, blank=True, null=True, on_delete=models.SET_NULL)
+    room = models.ForeignKey(
+        Room, blank=True, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.user.first_name
@@ -85,6 +86,7 @@ class Interviewee(models.Model):
     sex = models.CharField(max_length=10)
     phone_number = models.CharField(max_length=20)
     student_id = models.CharField(max_length=15)
+    email = models.EmailField(max_length=254, blank=True, null=True)
     majar_text = models.CharField(max_length=30)
     introduction_text = models.TextField()
     interview_status = models.IntegerField(choices=INTERVIEWEE_STATUS)
@@ -114,8 +116,8 @@ class Interviewee(models.Model):
         Room, blank=True, null=True, on_delete=models.SET_NULL
     )
     assigned_datetime = models.DateTimeField()
-    start_datetime = models.DateTimeField(blank=True,null=True)
-    end_datetime = models.DateTimeField(blank=True,null=True)
+    start_datetime = models.DateTimeField(blank=True, null=True)
+    end_datetime = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -124,17 +126,17 @@ class Interviewee(models.Model):
 class Judgement(models.Model):
     # 使用IntegerField存储1-5星评分
     representation = models.IntegerField(
-        choices=[(i, f'{i}星') for i in range(1, 6)], 
+        choices=[(i, f'{i}星') for i in range(1, 6)],
         verbose_name="表达能力",
         help_text="1-5星评分"
     )
     ability = models.IntegerField(
-        choices=[(i, f'{i}星') for i in range(1, 6)], 
+        choices=[(i, f'{i}星') for i in range(1, 6)],
         verbose_name="专业能力",
         help_text="1-5星评分"
     )
     cognition = models.IntegerField(
-        choices=[(i, f'{i}星') for i in range(1, 6)], 
+        choices=[(i, f'{i}星') for i in range(1, 6)],
         verbose_name="对网协的认识",
         help_text="1-5星评分"
     )
@@ -144,6 +146,7 @@ class Judgement(models.Model):
 
     def __str__(self):
         return "%s-%s" % (self.interviewee, self.interviewer.first_name)
+
 
 class JudgementForm(ModelForm):
     class Meta:

@@ -444,6 +444,7 @@ def interviewee_list_api(request):
             "name": interviewee.name,
             "sex": interviewee.sex,
             "student_id": interviewee.student_id,
+            "email": interviewee.email,
             "interview_status": interviewee.interview_status,
             "interview_status_display": interviewee.get_interview_status_display(),
             "first_preference": fpn,
