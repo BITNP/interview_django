@@ -274,6 +274,10 @@
       margin-top: 10px;
     }
 
+    .comment-content.mt-0 {
+      margin-top: 0 !important;
+    }
+
     /* 简洁评价样式 */
     .judge-item {
       background: #fff9e6;
@@ -285,6 +289,10 @@
 
     .judge-content {
       margin-top: 10px;
+    }
+
+    .judge-content.mt-0 {
+      margin-top: 0 !important;
     }
 
     /* 按钮悬停效果 */
@@ -384,19 +392,26 @@
           html += '<p class="mb-0 small">成为第一个发表评论的人吧！</p>';
           html += '</div>';
         } else {
+          let lastCommentUser = null; // 记录上一条评论的用户
           $.each(data, function (index, item) {
+            const showUserInfo = (lastCommentUser !== item.name); // 判断是否显示用户信息
+
             html += '<div class="comment-item">';
-            html += '<div class="d-flex justify-content-between align-items-center mb-2">';
-            html += '<div class="d-flex align-items-center">';
-            html += '<span class="badge badge-info mr-2">👤</span>';
-            html += '<strong class="text-primary">' + escapeHtml(item.name) + '</strong>';
-            html += '</div>';
-            html += '<small class="text-muted">刚刚</small>';
-            html += '</div>';
-            html += '<div class="comment-content">';
+
+            // 只有当用户不同时才显示用户信息头部
+            if (showUserInfo) {
+              html += '<div class="d-flex align-items-center mb-2">';
+              html += '<span class="badge badge-info mr-2">👤</span>';
+              html += '<strong class="text-primary">' + escapeHtml(item.name) + '</strong>';
+              html += '</div>';
+            }
+
+            html += '<div class="comment-content' + (showUserInfo ? '' : ' mt-0') + '">';
             html += '<p class="mb-0 text-dark">' + escapeHtml(item.content).replace(/\n/g, '<br>') + '</p>';
             html += '</div>';
             html += '</div>';
+
+            lastCommentUser = item.name; // 更新上一条评论的用户
           });
         }
         $('#comment_list_div').html(html);
@@ -427,19 +442,26 @@
           html += '<p class="mb-0 small">等待面试官进行评分</p>';
           html += '</div>';
         } else {
+          let lastJudgeUser = null; // 记录上一条评价的用户
           $.each(data, function (index, item) {
+            const showUserInfo = (lastJudgeUser !== item.name); // 判断是否显示用户信息
+
             html += '<div class="judge-item">';
-            html += '<div class="d-flex justify-content-between align-items-center mb-2">';
-            html += '<div class="d-flex align-items-center">';
-            html += '<span class="badge badge-warning mr-2">🏆</span>';
-            html += '<strong class="text-warning">' + escapeHtml(item.name) + '</strong>';
-            html += '</div>';
-            html += '<small class="text-success">✅ 已评价</small>';
-            html += '</div>';
-            html += '<div class="judge-content">';
+
+            // 只有当用户不同时才显示用户信息头部
+            if (showUserInfo) {
+              html += '<div class="d-flex align-items-center mb-2">';
+              html += '<span class="badge badge-warning mr-2">🏆</span>';
+              html += '<strong class="text-warning">' + escapeHtml(item.name) + '</strong>';
+              html += '</div>';
+            }
+
+            html += '<div class="judge-content' + (showUserInfo ? '' : ' mt-0') + '">';
             html += '<p class="mb-0 text-dark">' + escapeHtml(item.content).replace(/\n/g, '<br>') + '</p>';
             html += '</div>';
             html += '</div>';
+
+            lastJudgeUser = item.name; // 更新上一条评价的用户
           });
         }
         $('#judge_list_div').html(html);
