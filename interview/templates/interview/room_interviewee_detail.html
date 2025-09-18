@@ -1,289 +1,479 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>网协面试系统</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    {% load static %}
-    <link href="{% static 'interview/bootstrap.min.css' %}" rel="stylesheet" />
-    <script src="{% static 'interview/jquery.min.js' %}"></script>
-    <script src="{% static 'interview/bootstrap.min.js' %}"></script>
-  </head>
 
-  <body>
-    <nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
-      <a class="navbar-brand" href="#">网协面试系统</a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
-      <div class="collapse navbar-collapse" id="navbarCollapse">
-        <ul class="navbar-nav mr-auto">
-          <li class="nav-item active">
-            <a class="nav-link" href="{% url 'interview:index' %}">面试系统 <span class="sr-only">(current)</span></a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admission:index' %}">录取系统</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin:index' %}">管理后台</a>
-          </li>
+<head>
+  <meta charset="utf-8" />
+  <title>网协面试系统</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  {% load static %}
+  <link href="{% static 'interview/bootstrap.min.css' %}" rel="stylesheet" />
+  <script src="{% static 'interview/jquery.min.js' %}"></script>
+  <script src="{% static 'interview/bootstrap.min.js' %}"></script>
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
+    <a class="navbar-brand" href="#">网协面试系统</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse"
+      aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation"><span
+        class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="navbarCollapse">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+          <a class="nav-link" href="{% url 'interview:index' %}">面试系统 <span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'admission:index' %}">录取系统</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'admin:index' %}">管理后台</a>
+        </li>
+      </ul>
+      <form class="form-inline my-2 my-lg-0" action="{% url 'oidc_logout' %}" method="post">
+        {% csrf_token %}
+        <button class="btn btn-success my-2 my-sm-0" type="submit">注销</button>
+      </form>
+    </div>
+  </nav>
+
+  <main role="main" class="container" data-interviewee-id="{{ interviewee.id }}"
+    data-interview-status="{{ interviewee.interview_status }}" {% if interviewee.start_datetime %}
+    data-start-datetime="{{ interviewee.start_datetime.isoformat }}" {% endif %} {% if interviewee.end_datetime %}
+    data-end-datetime="{{ interviewee.end_datetime.isoformat }}" {% endif %}>
+    <div class="jumbotron">
+      <a href="{% url 'interview:room_index' room_id %}">返回</a>
+      <div id="student">
+        <table class="table table-hover table-responsive m-auto text-center">
+          <thead>
+            <tr>
+              <th scope="col">姓名</th>
+              <th scope="col">性别</th>
+              <th scope="col">学号</th>
+              <th scope="col">专业</th>
+              <th scope="col">接受调剂</th>
+              <th scope="col">一志愿</th>
+              <th scope="col">二志愿</th>
+              <th scope="col">操作</th>
+              <th scope="col">面试计时</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="table-warning">
+              <td class="align-middle">{{ interviewee.name }}</td>
+              <td class="align-middle">{{ interviewee.sex }}</td>
+              <td class="align-middle">{{ interviewee.student_id }}</td>
+              <td class="align-middle">{{ interviewee.majar_text }}</td>
+              <td class="align-middle">{{ interviewee.accept_adjust }}</td>
+              <td class="align-middle">{{ interviewee.first_preference }}</td>
+              <td class="align-middle">{{ interviewee.second_preference }}</td>
+              <td class="align-middle">
+                {% if not readonly %}
+                {% if interviewee.interview_status == 3 %}
+                <a href="{% url 'interview:room_interviewee_start' room_id interviewee.id %}"><button type="button"
+                    class="btn btn-success btn-block">开始面试</button></a>
+                {% elif interviewee.interview_status == 4 %}
+                <a href="{% url 'interview:room_interviewee_end' room_id interviewee.id %}"><button type="button"
+                    class="btn btn-danger btn-block">结束面试</button></a>
+                {% else %}
+                <button type="button" class="btn btn-secondary btn-block disable">面试已结束</button>
+                {% endif %}
+                {% endif %}
+              </td>
+              <td class="align-middle">
+                <span id="interview_time">--:--</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <ul class="list-group mb-5">
+          <li class="list-group-item">{{ interviewee.introduction_text|linebreaksbr }}</li>
         </ul>
-        <form class="form-inline my-2 my-lg-0" action="{% url 'oidc_logout' %}" method="post">
-          {% csrf_token %}
-          <button class="btn btn-success my-2 my-sm-0" type="submit">注销</button>
-        </form>
       </div>
-    </nav>
 
-    <main role="main" class="container" 
-          data-interviewee-id="{{ interviewee.id }}"
-          data-interview-status="{{ interviewee.interview_status }}"
-          {% if interviewee.start_datetime %}
-          data-start-datetime="{{ interviewee.start_datetime.isoformat }}"
-          {% endif %}
-          {% if interviewee.end_datetime %}
-          data-end-datetime="{{ interviewee.end_datetime.isoformat }}"
-          {% endif %}>
-      <div class="jumbotron">
-        <a href="{% url 'interview:room_index' room_id %}">返回</a>
-        <div id="student">
-          <table class="table table-hover table-responsive m-auto text-center">
-            <thead>
-              <tr>
-                <th scope="col">姓名</th>
-                <th scope="col">性别</th>
-                <th scope="col">学号</th>
-                <th scope="col">专业</th>
-                <th scope="col">接受调剂</th>
-                <th scope="col">一志愿</th>
-                <th scope="col">二志愿</th>
-                <th scope="col">操作</th>
-                <th scope="col">面试计时</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="table-warning">
-                <td class="align-middle">{{ interviewee.name }}</td>
-                <td class="align-middle">{{ interviewee.sex }}</td>
-                <td class="align-middle">{{ interviewee.student_id }}</td>
-                <td class="align-middle">{{ interviewee.majar_text }}</td>
-                <td class="align-middle">{{ interviewee.accept_adjust }}</td>
-                <td class="align-middle">{{ interviewee.first_preference }}</td>
-                <td class="align-middle">{{ interviewee.second_preference }}</td>
-                <td class="align-middle">
-                  {% if not readonly %}
-                    {% if interviewee.interview_status == 3 %}
-                      <a href="{% url 'interview:room_interviewee_start' room_id interviewee.id %}"><button type="button" class="btn btn-success btn-block">开始面试</button></a>
-                    {% elif interviewee.interview_status == 4 %}
-                      <a href="{% url 'interview:room_interviewee_end' room_id interviewee.id %}"><button type="button" class="btn btn-danger btn-block">结束面试</button></a>
-                    {% else %}
-                      <button type="button" class="btn btn-secondary btn-block disable">面试已结束</button>
-                    {% endif %}
-                  {% endif %}
-                </td>
-                <td class="align-middle">
-                  <span id="interview_time">--:--</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <ul class="list-group mb-5">
-            <li class="list-group-item">{{ interviewee.introduction_text|linebreaksbr }}</li>
-          </ul>
+      <!-- 评论区域 -->
+      <div class="card mt-4">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">💬 面试评论</h5>
         </div>
-
-        <div id="comment">
-          <div class="mb-5" id="comment_list_div">
+        <div class="card-body">
+          <div id="comment_list_div" class="mb-3">
             <!-- for get_interviewee_comments() -->
-            <ul class="list-group">
-              <li class="list-group-item">正在加载......</li>
-            </ul>
+            <div class="d-flex justify-content-center align-items-center py-4">
+              <div class="spinner-border spinner-border-sm text-info mr-2" role="status">
+                <span class="sr-only">正在加载...</span>
+              </div>
+              <span>正在加载评论...</span>
+            </div>
           </div>
-          {% if not readonly %}
-            <form action="{% url 'interview:room_interviewee_comment' room_id interviewee.id %}" method="post" id="comment_form">
-              {% csrf_token %}
-              <label for="id_content">评论:</label>
-              <br />
-              <textarea class="form-control" name="content" rows="3" required="" id="id_content"></textarea>
-              <br />
-              <input type="submit" value="评论" />
-            </form>
-          {% endif %}
-        </div>
 
-        <div id="judge">
-          <div class="my-5" id="judge_list_div">
-            <ul class="list-group">
-              <li class="list-group-item">正在加载......</li>
-            </ul>
-          </div>
           {% if not readonly %}
-            <form action="{% url 'interview:room_interviewee_judge' room_id interviewee.id %}" method="post" id="judge_form"
-                  {% if existing_judgement %}
-                  data-existing-representation="{{ existing_judgement.representation }}"
-                  data-existing-ability="{{ existing_judgement.ability }}"
-                  data-existing-cognition="{{ existing_judgement.cognition }}"
-                  {% endif %}>
+          <div class="border-top pt-3">
+            <form action="{% url 'interview:room_interviewee_comment' room_id interviewee.id %}" method="post"
+              id="comment_form">
               {% csrf_token %}
-              
-              <div class="form-group mb-3">
-                <label for="id_rep">表达能力:</label>
-                <div class="star-rating" data-field="representation">
-                  <span class="star" data-value="1">★</span>
-                  <span class="star" data-value="2">★</span>
-                  <span class="star" data-value="3">★</span>
-                  <span class="star" data-value="4">★</span>
-                  <span class="star" data-value="5">★</span>
-                </div>
-                <input type="hidden" name="representation" id="id_rep" required />
+              <div class="form-group">
+                <label for="id_content" class="font-weight-bold">
+                  ✏️ 添加评论:
+                </label>
+                <textarea class="form-control" name="content" rows="3" required="" id="id_content"
+                  placeholder="在此输入面试评论..."></textarea>
+                <small class="form-text text-muted">按 Enter 提交，Ctrl+Enter 换行</small>
               </div>
-              
-              <div class="form-group mb-3">
-                <label for="id_abi">专业能力:</label>
-                <div class="star-rating" data-field="ability">
-                  <span class="star" data-value="1">★</span>
-                  <span class="star" data-value="2">★</span>
-                  <span class="star" data-value="3">★</span>
-                  <span class="star" data-value="4">★</span>
-                  <span class="star" data-value="5">★</span>
-                </div>
-                <input type="hidden" name="ability" id="id_abi" required />
-              </div>
-              
-              <div class="form-group mb-3">
-                <label for="id_cog">对网协的认识:</label>
-                <div class="star-rating" data-field="cognition">
-                  <span class="star" data-value="1">★</span>
-                  <span class="star" data-value="2">★</span>
-                  <span class="star" data-value="3">★</span>
-                  <span class="star" data-value="4">★</span>
-                  <span class="star" data-value="5">★</span>
-                </div>
-                <input type="hidden" name="cognition" id="id_cog" required />
-              </div>
-              
-              {% if existing_judgement %}
-                <input type="submit" value="更新评价" class="btn btn-warning" />
-              {% else %}
-                <input type="submit" value="提交评价" class="btn btn-primary" />
-              {% endif %}
+              <button type="submit" class="btn btn-info">
+                📤 发布评论
+              </button>
             </form>
+          </div>
           {% endif %}
         </div>
       </div>
-    </main>
-    
-    <!-- 星级评价样式 -->
-    <style>
-      .star-rating {
-        display: flex;
-        margin-bottom: 10px;
+
+      <!-- 评价区域 -->
+      <div class="card mt-4">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0">⭐ 面试评价</h5>
+        </div>
+        <div class="card-body">
+          <div id="judge_list_div" class="mb-3">
+            <div class="d-flex justify-content-center align-items-center py-4">
+              <div class="spinner-border spinner-border-sm text-warning mr-2" role="status">
+                <span class="sr-only">正在加载...</span>
+              </div>
+              <span>正在加载评价...</span>
+            </div>
+          </div>
+
+          {% if not readonly %}
+          <div class="border-top pt-3">
+            <form action="{% url 'interview:room_interviewee_judge' room_id interviewee.id %}" method="post"
+              id="judge_form" {% if existing_judgement %}
+              data-existing-representation="{{ existing_judgement.representation }}"
+              data-existing-ability="{{ existing_judgement.ability }}"
+              data-existing-cognition="{{ existing_judgement.cognition }}" {% endif %}>
+              {% csrf_token %}
+
+              <div class="row">
+                <div class="col-12 col-lg-4">
+                  <div class="form-group mb-4">
+                    <label for="id_rep" class="font-weight-bold text-primary">
+                      🎤 表达能力
+                    </label>
+                    <div class="text-center">
+                      <div class="star-rating" data-field="representation">
+                        <span class="star" data-value="1">★</span>
+                        <span class="star" data-value="2">★</span>
+                        <span class="star" data-value="3">★</span>
+                        <span class="star" data-value="4">★</span>
+                        <span class="star" data-value="5">★</span>
+                      </div>
+                      <small class="text-muted d-block">点击星星评分</small>
+                    </div>
+                    <input type="hidden" name="representation" id="id_rep" required />
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <div class="form-group mb-4">
+                    <label for="id_abi" class="font-weight-bold text-success">
+                      ⚙️ 专业能力
+                    </label>
+                    <div class="text-center">
+                      <div class="star-rating" data-field="ability">
+                        <span class="star" data-value="1">★</span>
+                        <span class="star" data-value="2">★</span>
+                        <span class="star" data-value="3">★</span>
+                        <span class="star" data-value="4">★</span>
+                        <span class="star" data-value="5">★</span>
+                      </div>
+                      <small class="text-muted d-block">技术水平评估</small>
+                    </div>
+                    <input type="hidden" name="ability" id="id_abi" required />
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <div class="form-group mb-4">
+                    <label for="id_cog" class="font-weight-bold text-info">
+                      💡 对网协的认识
+                    </label>
+                    <div class="text-center">
+                      <div class="star-rating" data-field="cognition">
+                        <span class="star" data-value="1">★</span>
+                        <span class="star" data-value="2">★</span>
+                        <span class="star" data-value="3">★</span>
+                        <span class="star" data-value="4">★</span>
+                        <span class="star" data-value="5">★</span>
+                      </div>
+                      <small class="text-muted d-block">了解程度</small>
+                    </div>
+                    <input type="hidden" name="cognition" id="id_cog" required />
+                  </div>
+                </div>
+              </div>
+
+              <div class="text-center">
+                {% if existing_judgement %}
+                <button type="submit" class="btn btn-warning btn-lg">
+                  ✏️ 更新评价
+                </button>
+                {% else %}
+                <button type="submit" class="btn btn-primary btn-lg">
+                  ✅ 提交评价
+                </button>
+                {% endif %}
+              </div>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bootstrap风格样式 -->
+  <style>
+    /* 星级评价样式 */
+    .star-rating {
+      display: inline-flex;
+      justify-content: center;
+      margin-bottom: 5px;
+    }
+
+    .star {
+      font-size: 28px;
+      color: #dee2e6;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-right: 3px;
+      user-select: none;
+    }
+
+    .star:hover {
+      color: #ffc107;
+      transform: scale(1.1);
+    }
+
+    .star.active {
+      color: #ffa000;
+    }
+
+    .star.filled {
+      color: #ffc107;
+    }
+
+    /* 简洁评论样式 */
+    .comment-item {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-left: 3px solid #17a2b8;
+    }
+
+    .comment-content {
+      margin-top: 10px;
+    }
+
+    /* 简洁评价样式 */
+    .judge-item {
+      background: #fff9e6;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-left: 3px solid #ffc107;
+    }
+
+    .judge-content {
+      margin-top: 10px;
+    }
+
+    /* 按钮悬停效果 */
+    .btn {
+      transition: all 0.15s ease-in-out;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    /* 表单控件聚焦效果 */
+    .form-control:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    /* 评分区域美化 */
+    .form-group {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .form-group label {
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+    }
+
+    /* 响应式优化 */
+    @media (max-width: 991.98px) {
+      .row .col-lg-4 {
+        margin-bottom: 15px;
       }
+
       .star {
         font-size: 24px;
-        color: #ddd;
-        cursor: pointer;
-        transition: color 0.2s;
-        margin-right: 5px;
-        user-select: none;
+        margin-right: 2px;
       }
-      .star:hover,
-      .star.active {
-        color: #ffc107;
+
+      .form-group {
+        padding: 15px;
+        margin-bottom: 20px;
       }
-      .star.filled {
-        color: #ffc107;
+    }
+
+    @media (max-width: 767.98px) {
+      .star {
+        font-size: 22px;
+        margin-right: 1px;
       }
-    </style>
-  </body>
+
+      .form-group {
+        padding: 12px;
+        margin-bottom: 15px;
+      }
+    }
+
+    /* 徽章样式优化 */
+    .badge {
+      font-size: 0.9rem;
+      padding: 6px 8px;
+    }
+  </style>
+</body>
 
 <script>
-var charMap = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
-  '/': '&#x2F;',
-  '`': '&#x60;',
-  '=': '&#x3D;'
-};
+  var charMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+    '/': '&#x2F;',
+    '`': '&#x60;',
+    '=': '&#x3D;'
+  };
 
-function escapeHtml(string) {
-  return String(string).replace(/[&<>"'`=\/]/g, function (s) {
-    return charMap[s];
-  });
-}
+  function escapeHtml(string) {
+    return String(string).replace(/[&<>"'`=\/]/g, function (s) {
+      return charMap[s];
+    });
+  }
 
-function get_interviewee_comments() {
+  function get_interviewee_comments() {
     const interviewee_id = parseInt('{{ interviewee.id }}');
     $.ajax({
-        url: "/api/interviewees/" + interviewee_id + "/comment",
-        method: 'GET',
-        dataType: 'json',
-        success: function(data) {
-            let html = '';
-            if (data.length == 0) {
-                html += '<ul class="list-group"><li class="list-group-item">还没有评论。</li></ul>';
-            } else {
-                html += '<ul class="list-group">';
-                $.each(data, function(index, item) {
-                    html += '<li class="list-group-item">' + escapeHtml(item.name) + "：" + escapeHtml(item.content) + '</li>';
-                });
-                html += '</ul>';
-            }
-            $('#comment_list_div').html(html);
-        },
-        error: function(xhr, status, error) {
-            const html = '<ul class="list-group"><li class="list-group-item">评论获取错误，请检查网络或联系管理员。</li></ul>';
-            $('#comment_list_div').html(html);
+      url: "/api/interviewees/" + interviewee_id + "/comment",
+      method: 'GET',
+      dataType: 'json',
+      success: function (data) {
+        let html = '';
+        if (data.length == 0) {
+          html += '<div class="text-center text-muted py-5">';
+          html += '<div class="mb-3" style="font-size: 4rem; opacity: 0.5;">💭</div>';
+          html += '<h6 class="mb-2">暂无评论</h6>';
+          html += '<p class="mb-0 small">成为第一个发表评论的人吧！</p>';
+          html += '</div>';
+        } else {
+          $.each(data, function (index, item) {
+            html += '<div class="comment-item">';
+            html += '<div class="d-flex justify-content-between align-items-center mb-2">';
+            html += '<div class="d-flex align-items-center">';
+            html += '<span class="badge badge-info mr-2">👤</span>';
+            html += '<strong class="text-primary">' + escapeHtml(item.name) + '</strong>';
+            html += '</div>';
+            html += '<small class="text-muted">刚刚</small>';
+            html += '</div>';
+            html += '<div class="comment-content">';
+            html += '<p class="mb-0 text-dark">' + escapeHtml(item.content).replace(/\n/g, '<br>') + '</p>';
+            html += '</div>';
+            html += '</div>';
+          });
         }
+        $('#comment_list_div').html(html);
+      },
+      error: function (xhr, status, error) {
+        const html = '<div class="text-center text-danger py-5">' +
+          '<div class="mb-3" style="font-size: 4rem; opacity: 0.5;">⚠️</div>' +
+          '<h6 class="mb-2">评论加载失败</h6>' +
+          '<p class="mb-0 small">请检查网络连接或联系管理员</p>' +
+          '</div>';
+        $('#comment_list_div').html(html);
+      }
     });
-}
+  }
 
-function get_interviewee_judge() {
-  const interviewee_id = parseInt('{{ interviewee.id }}');
-  $.ajax({
+  function get_interviewee_judge() {
+    const interviewee_id = parseInt('{{ interviewee.id }}');
+    $.ajax({
       url: "/api/interviewees/" + interviewee_id + "/judge",
       method: 'GET',
       dataType: 'json',
-      success: function(data) {
-          let html = '';
-          if (data.length == 0) {
-              html += '<ul class="list-group"><li class="list-group-item">还没有评价。</li></ul>';
-          } else {
-              html += '<ul class="list-group">';
-              $.each(data, function(index, item) {
-                  html += '<li class="list-group-item">' + escapeHtml(item.name) + "：" + escapeHtml(item.content) + '</li>';
-              });
-              html += '</ul>';
-          }
-          $('#judge_list_div').html(html);
+      success: function (data) {
+        let html = '';
+        if (data.length == 0) {
+          html += '<div class="text-center text-muted py-4">';
+          html += '<div class="mb-3" style="font-size: 3rem; opacity: 0.5;">⭐</div>';
+          html += '<h6 class="mb-2">暂无评价</h6>';
+          html += '<p class="mb-0 small">等待面试官进行评分</p>';
+          html += '</div>';
+        } else {
+          $.each(data, function (index, item) {
+            html += '<div class="judge-item">';
+            html += '<div class="d-flex justify-content-between align-items-center mb-2">';
+            html += '<div class="d-flex align-items-center">';
+            html += '<span class="badge badge-warning mr-2">🏆</span>';
+            html += '<strong class="text-warning">' + escapeHtml(item.name) + '</strong>';
+            html += '</div>';
+            html += '<small class="text-success">✅ 已评价</small>';
+            html += '</div>';
+            html += '<div class="judge-content">';
+            html += '<p class="mb-0 text-dark">' + escapeHtml(item.content).replace(/\n/g, '<br>') + '</p>';
+            html += '</div>';
+            html += '</div>';
+          });
+        }
+        $('#judge_list_div').html(html);
       },
-      error: function(xhr, status, error) {
-          const html = '<ul class="list-group"><li class="list-group-item">评价获取错误，请检查网络或联系管理员。</li></ul>';
-          $('#judge_list_div').html(html);
+      error: function (xhr, status, error) {
+        const html = '<div class="text-center text-danger py-4">' +
+          '<div class="mb-3" style="font-size: 3rem; opacity: 0.5;">⚠️</div>' +
+          '<h6 class="mb-2">评价加载失败</h6>' +
+          '<p class="mb-0 small">请检查网络连接或联系管理员</p>' +
+          '</div>';
+        $('#judge_list_div').html(html);
       }
-  });
-}
-
-function set_formatted_time(start, end){
-  var difftime = (end-start)/1000;
-  var minutes = parseInt(difftime%3600/60);
-  var seconds = parseInt(difftime%60);
-  console.log(minutes, seconds);
-  $('#interview_time').html(minutes+":"+seconds);
-}
-
-function get_interview_time() {
-  const container = $('main[data-start-datetime]');
-  const startDatetime = container.data('start-datetime');
-  if (startDatetime) {
-    const start = new Date(startDatetime);
-    const now = new Date();
-    set_formatted_time(start, now);
+    });
   }
-}
 
-$("document").ready(function () {
+  function set_formatted_time(start, end) {
+    var difftime = (end - start) / 1000;
+    var minutes = parseInt(difftime % 3600 / 60);
+    var seconds = parseInt(difftime % 60);
+    console.log(minutes, seconds);
+    $('#interview_time').html(minutes + ":" + seconds);
+  }
+
+  function get_interview_time() {
+    const container = $('main[data-start-datetime]');
+    const startDatetime = container.data('start-datetime');
+    if (startDatetime) {
+      const start = new Date(startDatetime);
+      const now = new Date();
+      set_formatted_time(start, now);
+    }
+  }
+
+  $("document").ready(function () {
     get_interviewee_comments();
     get_interviewee_judge();
     setInterval(get_interviewee_comments, 1500);
@@ -294,115 +484,156 @@ $("document").ready(function () {
     const interviewStatus = parseInt(container.data('interview-status'));
 
     if (!startDatetime) {
-        $('#interview_time').html("--:--");
+      $('#interview_time').html("--:--");
     } else {
-        if (interviewStatus === 4) {
-            setInterval(get_interview_time, 1000);
-        } else if (endDatetime) {
-            const start = new Date(startDatetime);
-            const end = new Date(endDatetime);
-            set_formatted_time(start, end);
-        }
+      if (interviewStatus === 4) {
+        setInterval(get_interview_time, 1000);
+      } else if (endDatetime) {
+        const start = new Date(startDatetime);
+        const end = new Date(endDatetime);
+        set_formatted_time(start, end);
+      }
     }
-})
+  });
 
-$("#id_content").keydown(function(event){
-    event=(event)?event:((window.event) ? window.event : "");
-    let keyCode=event.keyCode?event.keyCode:(event.which?event.which:event.charCode);
+  $("#id_content").keydown(function (event) {
+    event = (event) ? event : ((window.event) ? window.event : "");
+    let keyCode = event.keyCode ? event.keyCode : (event.which ? event.which : event.charCode);
     let altKey = event.ctrlKey || event.metaKey;
-    if(keyCode == 13 && altKey) {
-        let newDope=$(this).val()+"\n";
-        $(this).val(newDope);
-    } else if(keyCode==13) {
-        event.preventDefault();
-        $("#comment_form").submit()
+    if (keyCode == 13 && altKey) {
+      let newDope = $(this).val() + "\n";
+      $(this).val(newDope);
+    } else if (keyCode == 13) {
+      event.preventDefault();
+      $("#comment_form").submit();
     }
-})
+  });
 
-// 星级评价功能
-$(document).ready(function() {
+  // 星级评价功能
+  $(document).ready(function () {
     // 预填充已存在的评价
     const judgeForm = $('#judge_form');
     if (judgeForm.length && judgeForm.data('existing-representation')) {
-        const existingRatings = {
-            'representation': parseInt(judgeForm.data('existing-representation')) || 0,
-            'ability': parseInt(judgeForm.data('existing-ability')) || 0,
-            'cognition': parseInt(judgeForm.data('existing-cognition')) || 0
-        };
-        
-        // 设置预填值
-        Object.entries(existingRatings).forEach(function([fieldName, rating]) {
-            if (rating > 0) {
-                const hiddenInput = $(`input[name="${fieldName}"]`);
-                const ratingGroup = $(`.star-rating[data-field="${fieldName}"]`);
-                
-                // 设置隐藏输入框的值
-                hiddenInput.val(rating);
-                
-                // 设置星星显示
-                ratingGroup.find('.star').each(function(index) {
-                    if (index < rating) {
-                        $(this).addClass('filled');
-                    } else {
-                        $(this).removeClass('filled');
-                    }
-                });
+      const existingRatings = {
+        'representation': parseInt(judgeForm.data('existing-representation')) || 0,
+        'ability': parseInt(judgeForm.data('existing-ability')) || 0,
+        'cognition': parseInt(judgeForm.data('existing-cognition')) || 0
+      };
+
+      // 设置预填值
+      Object.entries(existingRatings).forEach(function ([fieldName, rating]) {
+        if (rating > 0) {
+          const hiddenInput = $(`input[name="${fieldName}"]`);
+          const ratingGroup = $(`.star-rating[data-field="${fieldName}"]`);
+
+          // 设置隐藏输入框的值
+          hiddenInput.val(rating);
+
+          // 设置星星显示
+          ratingGroup.find('.star').each(function (index) {
+            if (index < rating) {
+              $(this).addClass('filled');
+            } else {
+              $(this).removeClass('filled');
             }
-        });
+          });
+        }
+      });
     }
 
     // 为每个星级评价组件绑定事件
-    $('.star-rating').each(function() {
-        const ratingGroup = $(this);
-        const fieldName = ratingGroup.data('field');
-        const hiddenInput = $(`input[name="${fieldName}"]`);
-        
-        // 星星点击事件
-        ratingGroup.find('.star').on('click', function() {
-            const rating = $(this).data('value');
-            hiddenInput.val(rating);
-            
-            // 更新星星显示
-            ratingGroup.find('.star').each(function(index) {
-                if (index < rating) {
-                    $(this).addClass('filled');
-                } else {
-                    $(this).removeClass('filled');
-                }
-            });
+    $('.star-rating').each(function () {
+      const ratingGroup = $(this);
+      const fieldName = ratingGroup.data('field');
+      const hiddenInput = $(`input[name="${fieldName}"]`);
+
+      // 星星点击事件
+      ratingGroup.find('.star').on('click', function () {
+        const rating = $(this).data('value');
+        hiddenInput.val(rating);
+
+        // 更新星星显示
+        ratingGroup.find('.star').each(function (index) {
+          if (index < rating) {
+            $(this).addClass('filled');
+          } else {
+            $(this).removeClass('filled');
+          }
         });
-        
-        // 星星悬停效果
-        ratingGroup.find('.star').on('mouseenter', function() {
-            const rating = $(this).data('value');
-            ratingGroup.find('.star').each(function(index) {
-                if (index < rating) {
-                    $(this).addClass('active');
-                } else {
-                    $(this).removeClass('active');
-                }
-            });
+      });
+
+      // 星星悬停效果
+      ratingGroup.find('.star').on('mouseenter', function () {
+        const rating = $(this).data('value');
+        ratingGroup.find('.star').each(function (index) {
+          if (index < rating) {
+            $(this).addClass('active');
+          } else {
+            $(this).removeClass('active');
+          }
         });
-        
-        // 鼠标离开时恢复显示
-        ratingGroup.on('mouseleave', function() {
-            ratingGroup.find('.star').removeClass('active');
-        });
+      });
+
+      // 鼠标离开时恢复显示
+      ratingGroup.on('mouseleave', function () {
+        ratingGroup.find('.star').removeClass('active');
+      });
     });
-    
-    // 表单验证
-    $('#judge_form').on('submit', function(e) {
-        const representation = $('input[name="representation"]').val();
-        const ability = $('input[name="ability"]').val();
-        const cognition = $('input[name="cognition"]').val();
-        
-        if (!representation || !ability || !cognition) {
-            e.preventDefault();
-            alert('请为所有项目评分！');
-            return false;
-        }
+
+    // 表单验证和提交优化
+    $('#judge_form').on('submit', function (e) {
+      const representation = $('input[name="representation"]').val();
+      const ability = $('input[name="ability"]').val();
+      const cognition = $('input[name="cognition"]').val();
+
+      if (!representation || !ability || !cognition) {
+        e.preventDefault();
+
+        // 创建Bootstrap警告提示
+        const alertHtml = '<div class="alert alert-warning alert-dismissible fade show" role="alert">' +
+          '⚠️ <strong>请完成所有评分！</strong> 需要为表达能力、专业能力和对网协的认识都进行评分。' +
+          '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+          '<span aria-hidden="true">&times;</span>' +
+          '</button>' +
+          '</div>';
+
+        // 移除旧的警告并添加新的
+        $('.alert-warning').remove();
+        $(this).prepend(alertHtml);
+
+        return false;
+      }
+
+      // 提交时显示loading状态
+      const submitBtn = $(this).find('button[type="submit"]');
+      submitBtn.html('⏳ 提交中...').prop('disabled', true);
     });
-});
+
+    // 当用户点击星星时，移除警告高亮
+    $('.star').on('click', function () {
+      $('.alert-warning').fadeOut();
+    });
+
+    // 评论表单提交优化
+    $('#comment_form').on('submit', function (e) {
+      const content = $('#id_content').val().trim();
+      if (!content) {
+        e.preventDefault();
+        $('#id_content').addClass('is-invalid');
+        return false;
+      }
+
+      // 显示提交状态
+      const submitBtn = $(this).find('button[type="submit"]');
+      submitBtn.html('⏳ 发布中...').prop('disabled', true);
+    });
+
+    // 输入时移除错误状态
+    $('#id_content').on('input', function () {
+      $(this).removeClass('is-invalid');
+    });
+  });
 
 </script>
+
 </html>
