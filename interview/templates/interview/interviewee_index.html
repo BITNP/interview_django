@@ -33,6 +33,26 @@
         margin: 2px;
       }
     }
+
+    /* 展台模式开关样式 */
+    .form-check-input {
+      cursor: pointer;
+    }
+
+    .form-check-label {
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    /* 弹窗动画 */
+    .modal.fade .modal-dialog {
+      transform: scale(0.8);
+      transition: transform 0.3s ease-out;
+    }
+
+    .modal.show .modal-dialog {
+      transform: scale(1);
+    }
   </style>
 </head>
 
@@ -63,7 +83,18 @@
 
   <main role="main" class="container">
     <div class="jumbotron">
-      <a href="{% url 'interview:index' %}">返回</a>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{% url 'interview:index' %}">返回</a>
+
+        <!-- 简化的展台模式开关 -->
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="exhibitionMode">
+          <label class="form-check-label" for="exhibitionMode">
+            展台模式 (分配教室时弹窗提醒)
+          </label>
+        </div>
+      </div>
+
       <div id="search_div">
         <div class="input-group my-3">
           <div class="input-group-prepend">
@@ -114,6 +145,124 @@
   var total_count = 0;
   var current_search = '';
   var search_mode = false;
+
+  // 展台模式相关变量
+  var exhibition_mode = false;
+  var eventSource = null;
+  var audioContext = null;
+
+  // 初始化音频上下文
+  function initAudioContext() {
+    if (!audioContext) {
+      try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {
+        console.log('Web Audio API不被支持');
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // 初始化SSE连接
+  function initSSEConnection() {
+    if (!exhibition_mode || eventSource) {
+      return;
+    }
+
+    try {
+      eventSource = new EventSource('/api/events/assignments/');
+
+      eventSource.onmessage = function (event) {
+        try {
+          const data = JSON.parse(event.data);
+
+          if (data.type === 'room_assignment') {
+            showAssignmentNotification(data.data.name, data.data.room);
+          } else if (data.type === 'connected') {
+            console.log('SSE连接已建立');
+          } else if (data.type === 'heartbeat') {
+            // 心跳消息，保持连接活跃
+          }
+        } catch (e) {
+          console.log('解析SSE消息失败:', e);
+        }
+      };
+
+      eventSource.onerror = function (event) {
+        console.log('SSE连接错误:', event);
+        if (eventSource.readyState === EventSource.CLOSED) {
+          console.log('SSE连接已关闭');
+          eventSource = null;
+          // 5秒后尝试重连
+          if (exhibition_mode) {
+            setTimeout(initSSEConnection, 5000);
+          }
+        }
+      };
+
+    } catch (e) {
+      console.log('初始化SSE连接失败:', e);
+    }
+  }
+
+  // 关闭SSE连接
+  function closeSSEConnection() {
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
+      console.log('SSE连接已关闭');
+    }
+  }
+
+  // 初始化音频上下文
+  function initAudioContext() {
+    if (!audioContext) {
+      try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {
+        console.log('Web Audio API不被支持');
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // 播放提示音
+  function playNotificationSound() {
+    if (!initAudioContext()) return;
+
+    try {
+      // 创建振荡器
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      // 连接音频节点
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      // 设置音效参数 - 两个音调的提示音
+      oscillator.type = 'sine';
+
+      // 第一个音调 (较高)
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.15);
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.3);
+
+      // 音量包络
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.05);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+      // 播放音效
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+
+    } catch (e) {
+      console.log('播放提示音失败:', e);
+    }
+  }
+
   const charMap = {
     '&': '&amp;',
     '<': '&lt;',
@@ -343,16 +492,96 @@
     current_page = 1;
     get_interviewees('');
   }
+
+  // 展台模式相关函数
+  function toggleExhibitionMode() {
+    exhibition_mode = $('#exhibitionMode').is(':checked');
+
+    if (exhibition_mode) {
+      // 初始化音频上下文（需要用户交互）
+      initAudioContext();
+      // 建立SSE连接
+      initSSEConnection();
+    } else {
+      // 关闭SSE连接
+      closeSSEConnection();
+    }
+  }
+
+  function showAssignmentNotification(name, room) {
+    // 播放提示音
+    playNotificationSound();
+
+    // 创建弹窗HTML
+    const modalId = 'notificationModal' + Date.now();
+    const modalHtml = `
+      <div class="modal fade" id="${modalId}" tabindex="-1" role="dialog" aria-labelledby="${modalId}Label" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+          <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-bottom">
+              <h4 class="modal-title text-dark" id="${modalId}Label">
+                教室分配通知
+              </h4>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body text-center py-5">
+              <h2 class="mb-4 text-dark">${escapeHtml(name)}</h2>
+              <h3 class="mb-4 text-muted">已分配到</h3>
+              <div class="border p-4 rounded">
+                <h1 class="mb-0 text-dark">${escapeHtml(room)}</h1>
+              </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+              <button type="button" class="btn btn-secondary btn-lg px-5" data-dismiss="modal">知道了</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // 添加到页面并显示
+    $('body').append(modalHtml);
+    $('#' + modalId).modal('show');
+
+    // 模态框关闭后移除DOM元素
+    $('#' + modalId).on('hidden.bs.modal', function () {
+      $(this).remove();
+    });
+
+    // 自动关闭（延长到10秒）
+    setTimeout(() => {
+      $('#' + modalId).modal('hide');
+    }, 10000);
+  }
+
   var search_timeout;
 
   $('document').ready(function () {
+    // 展台模式开关事件
+    $('#exhibitionMode').change(toggleExhibitionMode);
+
+    // 添加页面点击事件来初始化音频上下文（现代浏览器要求）
+    $(document).one('click', function () {
+      if (exhibition_mode) {
+        initAudioContext();
+      }
+    });
+
     get_interviewees();
+
     setInterval(function () {
       // 只有在非搜索模式或者没有新的搜索输入时才自动刷新
       if (!search_mode || !$('#student_search').val().trim()) {
         get_interviewees(current_search);
       }
     }, 5000);
+  });
+
+  // 页面卸载时清理SSE连接
+  $(window).on('beforeunload', function () {
+    closeSSEConnection();
   });
 
   $('#student_search').on('input keydown', function (event) {

@@ -123,6 +123,17 @@ class Interviewee(models.Model):
         return self.name
 
 
+class BroadcastEvent(models.Model):
+    """
+    A model to store broadcast events for polling clients.
+    """
+    message = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Event at {self.created_at}"
+
+
 class Judgement(models.Model):
     # 使用IntegerField存储1-5星评分
     representation = models.IntegerField(

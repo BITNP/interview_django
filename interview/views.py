@@ -4,14 +4,17 @@ from django.http import (
     HttpResponseRedirect,
     HttpResponseForbidden,
     JsonResponse,
+    StreamingHttpResponse,
 )
-from django.views import generic
+
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from .models import *
 from django.utils import timezone
+import json
+import time
 
 
 def Forbidden(msg=None):
@@ -185,6 +188,17 @@ def interviewee_assign(request, room_id, interviewee_id):
             interviewee.assigned_room = room
             interviewee.interview_status = Interviewee.INTERVIEW_READY
             interviewee.save()
+
+            # Create a broadcast event in the database
+            message = {
+                'type': 'room_assignment',
+                'data': {
+                    'name': interviewee.name,
+                    'room': room.name,
+                    'timestamp': timezone.now().isoformat()
+                }
+            }
+            BroadcastEvent.objects.create(message=message)
         else:
             return HttpResponseRedirect(
                 reverse("interview:room_index", args=(room_id,))
@@ -573,3 +587,35 @@ def setup_interviewer(request):
 
     # GET请求重定向到首页
     return HttpResponseRedirect(reverse("interview:index"))
+
+def assignment_events_sse(request):
+    """
+    SSE端点，用于通过数据库轮询实时推送教室分配事件
+    """
+    def event_stream():
+        last_id = 0
+        if BroadcastEvent.objects.exists():
+            last_id = BroadcastEvent.objects.latest('id').id
+
+        # Send connection established message
+        yield f"data: {json.dumps({'type': 'connected', 'message': 'SSE connection established using db-polling'})}\n\n"
+
+        while True:
+            events = BroadcastEvent.objects.filter(id__gt=last_id).order_by('id')
+
+            if events.exists():
+                for event in events:
+                    yield f"data: {json.dumps(event.message)}\n\n"
+                    last_id = event.id
+            else:
+                # Send a heartbeat to keep the connection alive
+                yield f"data: {json.dumps({'type': 'heartbeat', 'timestamp': timezone.now().isoformat()})}\n\n"
+
+            # Sleep for a short duration before polling again
+            time.sleep(2)
+
+    response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+    response['Cache-Control'] = 'no-cache'
+    response['Access-Control-Allow-Origin'] = '*'
+    response['Access-Control-Allow-Headers'] = 'Cache-Control'
+    return response
