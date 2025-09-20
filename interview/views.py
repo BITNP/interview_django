@@ -158,6 +158,63 @@ def room_interviewee_detail(request, room_id, interviewee_id):
     return render(request, "interview/room_interviewee_detail.html", context=context)
 
 
+@login_required()
+def room_interviewee_list_api(request, room_id):
+    """
+    获取特定面试室的面试者列表API
+    """
+    room = get_object_or_404(Room, pk=room_id)
+    interviewee_list = (
+        Interviewee.objects.filter(
+            Q(assigned_room=room) | Q(interview_status=Interviewee.CHECKED_IN)
+        )
+        .order_by("interview_status", "assigned_datetime")
+        .all()
+    )
+
+    # Check permissions for the 'readonly' flag
+    user_identity = request.user.interviewer.interview_identity
+    user_room_id = request.user.interviewer.room_id
+    readonly = not (user_identity ==
+                    Interviewer.INTERVIEW_ROOM and user_room_id == room_id)
+
+    data = []
+    for interviewee in interviewee_list:
+        fpn = interviewee.first_preference.name if interviewee.first_preference else ""
+        spn = (
+            interviewee.second_preference.name if interviewee.second_preference else ""
+        )
+
+        # Determine button state/action
+        action_html = ""
+        if interviewee.interview_status == Interviewee.CHECKED_IN:
+            if not readonly:
+                action_html = f'<a href="{reverse("interview:interviewee_assign", args=(room_id, interviewee.id))}"><button type="button" class="btn btn-primary btn-block">拉人</button></a>'
+            else:
+                action_html = f'<a href="{reverse("interview:room_interviewee_detail", args=(room_id, interviewee.id))}"><button type="button" class="btn btn-secondary btn-block" disabled>无法拉人</button></a>'
+        elif interviewee.interview_status == Interviewee.INTERVIEW_READY:
+            action_html = f'<a href="{reverse("interview:room_interviewee_detail", args=(room_id, interviewee.id))}"><button type="button" class="btn btn-success btn-block">进入面试</button></a>'
+        elif interviewee.interview_status == Interviewee.INTERVIEW_STARTED:
+            action_html = f'<a href="{reverse("interview:room_interviewee_detail", args=(room_id, interviewee.id))}"><button type="button" class="btn btn-success btn-block">进入面试</button></a>'
+        else:
+            action_html = f'<a href="{reverse("interview:room_interviewee_detail", args=(room_id, interviewee.id))}"><button type="button" class="btn btn-secondary btn-block">查看</button></a>'
+
+        interviewee_dict = {
+            "id": interviewee.id,
+            "name": interviewee.name,
+            "sex": interviewee.sex,
+            "student_id": interviewee.student_id,
+            "interview_status_display": interviewee.get_interview_status_display(),
+            "first_preference": fpn,
+            "second_preference": spn,
+            "action_html": action_html,
+            "accept_adjust": interviewee.accept_adjust
+        }
+        data.append(interviewee_dict)
+
+    return JsonResponse({"interviewees": data})
+
+
 @login_required
 def interviewee_assign(request, room_id, interviewee_id):
     """
@@ -588,6 +645,7 @@ def setup_interviewer(request):
     # GET请求重定向到首页
     return HttpResponseRedirect(reverse("interview:index"))
 
+
 def assignment_events_sse(request):
     """
     SSE端点，用于通过数据库轮询实时推送教室分配事件
@@ -601,7 +659,8 @@ def assignment_events_sse(request):
         yield f"data: {json.dumps({'type': 'connected', 'message': 'SSE connection established using db-polling'})}\n\n"
 
         while True:
-            events = BroadcastEvent.objects.filter(id__gt=last_id).order_by('id')
+            events = BroadcastEvent.objects.filter(
+                id__gt=last_id).order_by('id')
 
             if events.exists():
                 for event in events:
@@ -614,7 +673,8 @@ def assignment_events_sse(request):
             # Sleep for a short duration before polling again
             time.sleep(2)
 
-    response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+    response = StreamingHttpResponse(
+        event_stream(), content_type='text/event-stream')
     response['Cache-Control'] = 'no-cache'
     response['Access-Control-Allow-Origin'] = '*'
     response['Access-Control-Allow-Headers'] = 'Cache-Control'
